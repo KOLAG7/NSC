@@ -1,0 +1,51 @@
+name: Deploy Dashboard
+
+on:
+  push:
+    branches: [main]       # runs every time you push to main
+  workflow_dispatch:        # also lets you trigger manually from GitHub UI
+
+# Grant the GITHUB_TOKEN the write access it needs to push to gh-pages.
+# Without this, peaceiris/actions-gh-pages exits with code 1 (permission denied).
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    # Force Node.js 24 runtime — actions/checkout@v4 runs on Node 20 which
+    # GitHub is deprecating. This silences the warning and future-proofs the workflow.
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+    steps:
+      # 1. Check out your source code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Inject secrets into the HTML template
+      #    Each %%TOKEN%% placeholder is replaced with the real value
+      #    from GitHub Secrets — nothing sensitive ever touches the repo.
+      - name: Inject secrets
+        env:
+          NSC_SHEET_ID:  ${{ secrets.NSC_SHEET_ID }}
+          NSC_API_KEY:   ${{ secrets.NSC_API_KEY }}
+          NSC_PASSWORD:  ${{ secrets.NSC_PASSWORD }}
+          NSC_MASTER_PW: ${{ secrets.NSC_MASTER_PW }}
+        run: |
+          sed -i \
+            -e "s|%%NSC_SHEET_ID%%|${NSC_SHEET_ID}|g" \
+            -e "s|%%NSC_API_KEY%%|${NSC_API_KEY}|g" \
+            -e "s|%%NSC_PASSWORD%%|${NSC_PASSWORD}|g" \
+            -e "s|%%NSC_MASTER_PW%%|${NSC_MASTER_PW}|g" \
+            index.html
+
+      # 3. Deploy the injected file to GitHub Pages
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./          # publish from root
+          publish_branch: gh-pages # output goes here (never to main)
+          # If your site uses other assets (logo, music, etc.),
+          # they are included automatically since publish_dir is ./
