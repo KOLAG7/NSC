@@ -1656,7 +1656,11 @@ const BOT_INFO = {
     asset:    'GOLD',                   // epic
     tf:       '30min',                  // DAY_RESOLUTION["GOLD"]
     enabled:  true,                     // STRATEGY_GOLD_DAY
-    backtest: '80.0%',                  // backtest win rate (20 trades)
+    backtest: '56.5%',                  // V3.6 backtest: +$1,458.42 / 23 trades / +$5.84 EV
+    btNetPnl: '+$1,458.42',
+    btTrades: 23,
+    btEvPerTrade: '+$5.84',
+    btVerdict: '🎯 excellent',
     size:     'ATR vol-adjusted',       // dynamic: base 1, scales with ATR + drawdown
     maxPos:   2,                        // DAY_MAX_POSITIONS["GOLD"]
     minScore: 5,                        // DAY_MIN_SCORE["GOLD"]
@@ -1688,7 +1692,11 @@ const BOT_INFO = {
     asset:    'GOLD',
     tf:       '15min',                  // SCALPER_RESOLUTION
     enabled:  true,                     // STRATEGY_GOLD_SCALP
-    backtest: '46.2%',                  // backtest win rate (13 trades)
+    backtest: '47.2%',                  // V3.6 backtest: +$1,301.78 / 178 trades / +$7.34 EV
+    btNetPnl: '+$1,301.78',
+    btTrades: 178,
+    btEvPerTrade: '+$7.34',
+    btVerdict: '📈 EV positive',
     size:     'Balance-scaled',         // dynamic: base 1, scales with balance + drawdown
     maxPos:   2,                        // SCALPER_MAX_POSITIONS["GOLD_SCALP"]
     minScore: 4,                        // SCALPER_MIN_SCORE["GOLD_SCALP"]
@@ -1764,10 +1772,10 @@ const BOT_INFO = {
     asset:    'NAS100',
     tf:       '15min',
     enabled:  true,                     // STRATEGY_NAS100_SCALP
-    backtest: '60.0%',                  // V3.6 backtest: +$1,968.17 / 40 trades / +$12.97 EV
-    btNetPnl: '+$1,968.17',
-    btTrades: 40,
-    btEvPerTrade: '+$12.97',
+    backtest: '61.4%',                  // V3.6 backtest: +$2,220.66 / 44 trades / +$14.57 EV
+    btNetPnl: '+$2,220.66',
+    btTrades: 44,
+    btEvPerTrade: '+$14.57',
     btVerdict: '🎯 excellent',
     size:     'Volatility-scaled (1% risk)',
     maxPos:   2,
@@ -1784,11 +1792,11 @@ const BOT_INFO = {
     asset:    'SILVER',
     tf:       '4H signal · 1H exec',
     enabled:  true,                     // STRATEGY_SILVER_SWING
-    backtest: '46.0%',                  // V3.6 backtest: +$33.47 / 126 trades / +$0.27 EV
-    btNetPnl: '+$33.47',
-    btTrades: 126,
-    btEvPerTrade: '+$0.27',
-    btVerdict: '📈 EV positive',
+    backtest: '48.1%',                  // V3.6 backtest: +$33.77 / 131 trades / +$0.26 EV
+    btNetPnl: '+$33.77',
+    btTrades: 131,
+    btEvPerTrade: '+$0.26',
+    btVerdict: '✅ solid',
     size:     'ATR-based (1% risk)',
     maxPos:   2,
     minScore: 6,
@@ -1824,7 +1832,11 @@ const BOT_INFO = {
     asset:    'EURUSD',
     tf:       '1H',
     enabled:  true,                     // STRATEGY_EURUSD
-    backtest: '42.1%',                  // backtest win rate (38 trades)
+    backtest: '48.8%',                  // V3.6 backtest: +$242.34 / 41 trades / +$1.60 EV
+    btNetPnl: '+$242.34',
+    btTrades: 41,
+    btEvPerTrade: '+$1.60',
+    btVerdict: '✅ solid',
     size:     'Balance-scaled',         // dynamic: base 10,000 units, scales with balance
     maxPos:   1,
     minScore: null,                     // no score — breakout entry
@@ -1839,7 +1851,11 @@ const BOT_INFO = {
     asset:    'USDJPY',
     tf:       '1H',
     enabled:  true,                     // STRATEGY_USDJPY
-    backtest: '41.1%',                  // backtest win rate (90 trades)
+    backtest: '45.7%',                  // V3.6 backtest: +$5,467.79 / 94 trades / +$40.37 EV
+    btNetPnl: '+$5,467.79',
+    btTrades: 94,
+    btEvPerTrade: '+$40.37',
+    btVerdict: '📈 EV positive',
     size:     'Balance-scaled',         // dynamic: base 1,000 units, scales with balance
     maxPos:   1,
     minScore: null,
@@ -1854,7 +1870,11 @@ const BOT_INFO = {
     asset:    'GBPUSD',
     tf:       '1H',
     enabled:  true,                     // STRATEGY_GBPUSD
-    backtest: '49.1%',                  // backtest win rate (57 trades)
+    backtest: '50.9%',                  // V3.6 backtest: +$412.00 / 55 trades / +$3.68 EV
+    btNetPnl: '+$412.00',
+    btTrades: 55,
+    btEvPerTrade: '+$3.68',
+    btVerdict: '✅ solid',
     size:     'Balance-scaled',         // dynamic: base 10,000 units, scales with balance
     maxPos:   1,
     minScore: null,
@@ -1870,7 +1890,11 @@ const BOT_INFO = {
     asset:    'GOLD',
     tf:       '1H signal · 4H trend',   // GS_RESOLUTION (HOUR) + GS_TREND_RESOLUTION (HOUR_4)
     enabled:  true,                     // STRATEGY_GOLD_SWING
-    backtest: '50.4%',                  // backtest win rate (127 trades)
+    backtest: '49.2%',                  // V3.6 backtest: +$1,166.56 / 128 trades / +$9.11 EV
+    btNetPnl: '+$1,166.56',
+    btTrades: 128,
+    btEvPerTrade: '+$9.11',
+    btVerdict: '✅ solid',
     size:     'ATR-based (1% risk)',    // GS_RISK_PCT = 0.01
     maxPos:   2,                        // GS_MAX_POSITIONS
     minScore: '≥6 buy / ≥7 sell',      // GS_MIN_SCORE_BUY / GS_MIN_SCORE_SELL
