@@ -1594,10 +1594,10 @@ const BOT_ICONS = {
 
 // ── Single-source version string (mirrors Python BOT_VERSION) ────
 //   Bump this one constant whenever you bump BOT_VERSION in the .py.
-//   BOT_FILE_TAG is derived (first two semver parts) for file-name
-//   references like "UnifiedTrader_V3.6".
-const BOT_VERSION  = '3.6.0';
-const BOT_FILE_TAG = 'V' + BOT_VERSION.split('.').slice(0, 2).join('.');
+//   BOT_FILE_TAG tracks the full version so it matches the Python
+//   filename convention (UnifiedTrader_V3.6.1.py etc.).
+const BOT_VERSION  = '3.6.1';
+const BOT_FILE_TAG = 'V' + BOT_VERSION;
 
 // ── System-level info (top banner on Bots tab — MASTER VIEW ONLY) ─
 // Edit these strings to match your current Python config:
@@ -5662,3 +5662,4 @@ document.addEventListener('keydown', e => {
 </script>
 </body>
 </html>
+
