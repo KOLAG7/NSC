@@ -802,9 +802,9 @@ body.privacy-on .inv-name-blur:hover{filter:blur(0);}
         </div>
       </div>
     </div>
-    <!-- Bot system info banner -->
-    <div style="padding:14px 18px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;margin-bottom:18px;">
-      <div style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:10px;">System Configuration · NSC UnifiedTrader v2.6.3</div>
+    <!-- Bot system info banner — MASTER VIEW ONLY -->
+    <div id="bot-system-banner" style="padding:14px 18px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;margin-bottom:18px;">
+      <div id="bot-system-banner-label" style="font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:10px;">System Configuration · NSC UnifiedTrader</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;">
         <div style="display:flex;flex-direction:column;gap:3px;padding:8px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;min-width:110px;">
           <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">Platform</div>
@@ -839,11 +839,11 @@ body.privacy-on .inv-name-blur:hover{filter:blur(0);}
       </div>
     </div>
     <div class="bot-grid" id="bot-cards-container"></div>
-    <div class="card">
+    <div class="card" id="bot-compare-card">
       <div class="card-header"><span class="card-title">Strategy Comparison — Total P&L</span></div>
       <div class="chart-wrap tall"><canvas id="botCompareChart"></canvas></div>
     </div>
-    <div class="card">
+    <div class="card" id="bot-winrate-card">
       <div class="card-header"><span class="card-title">Win Rate by Strategy</span></div>
       <div class="chart-wrap"><canvas id="botWinRateChart"></canvas></div>
     </div>
@@ -1562,40 +1562,53 @@ let PERF_FEE_RATE   = getPerfFeeRate();
 
 // ── Bot strategy colours ──────────────────────────────────────────
 const BOT_COLORS = {
-  'Gold Day-Trade':   '#e8c47a',
-  'BTC Day-Trade':    '#f7931a',
-  'Oil Day-Trade':    '#c8a96e',
-  'Gold Scalper':     '#f0d060',
-  'BTC Scalper':      '#f7931a',
-  'Oil Scalper':      '#a8c48a',
-  'EURUSD Breakout':  '#5b9cf6',
-  'USDJPY Breakout':  '#f05c6a',
-  'GBPUSD Breakout':  '#2dd4a0',
-  'Gold Swing Hunter':'#d4af37',
+  'Gold Day-Trade':    '#e8c47a',
+  'BTC Day-Trade':     '#f7931a',   // archived V3.5.0
+  'BTC Hunter':        '#f7931a',   // new V3.5.0
+  'Oil Day-Trade':     '#c8a96e',
+  'Gold Scalper':      '#f0d060',
+  'BTC Scalper':       '#f7931a',
+  'Oil Scalper':       '#a8c48a',   // archived V3.5
+  'OIL Precision':     '#a8c48a',   // new V3.6 (re-enabled V3.5.1 config)
+  'NAS100 Scalper':    '#6d7bff',
+  'Silver Swing Hunter':'#c0c0c0',
+  'US500 Swing Hunter':'#9fa8b0',
+  'EURUSD Breakout':   '#5b9cf6',
+  'USDJPY Breakout':   '#f05c6a',
+  'GBPUSD Breakout':   '#2dd4a0',
+  'Gold Swing Hunter': '#d4af37',
 };
 const BOT_ICONS = {
-  'Gold Day-Trade':'🥇','BTC Day-Trade':'₿','Oil Day-Trade':'🛢️',
-  'Gold Scalper':'⚡','BTC Scalper':'⚡','Oil Scalper':'🛢️',
+  'Gold Day-Trade':'🥇','BTC Day-Trade':'₿','BTC Hunter':'🎯','Oil Day-Trade':'🛢️',
+  'Gold Scalper':'⚡','BTC Scalper':'⚡','Oil Scalper':'🛢️','OIL Precision':'🎯',
+  'NAS100 Scalper':'📊','Silver Swing Hunter':'🥈','US500 Swing Hunter':'📈',
   'EURUSD Breakout':'💶','USDJPY Breakout':'💴','GBPUSD Breakout':'💷',
   'Gold Swing Hunter':'🏹',
 };
 
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  BOT INFO — EDIT THIS SECTION TO UPDATE THE BOTS TAB           ║
-// ║  Mirrors UnifiedTrader_V2_4.py config. Update when you change  ║
+// ║  Mirrors UnifiedTrader_V3.6.py config. Update when you change  ║
 // ║  the Python file to keep the dashboard in sync.                ║
 // ╚══════════════════════════════════════════════════════════════════╝
 
-// ── System-level info (top banner on Bots tab) ───────────────────
+// ── Single-source version string (mirrors Python BOT_VERSION) ────
+//   Bump this one constant whenever you bump BOT_VERSION in the .py.
+//   BOT_FILE_TAG is derived (first two semver parts) for file-name
+//   references like "UnifiedTrader_V3.6".
+const BOT_VERSION  = '3.6.0';
+const BOT_FILE_TAG = 'V' + BOT_VERSION.split('.').slice(0, 2).join('.');
+
+// ── System-level info (top banner on Bots tab — MASTER VIEW ONLY) ─
 // Edit these strings to match your current Python config:
 const BOT_META = {
-  version:        '2.6.3',            // BOT_VERSION in Python
+  version:        BOT_VERSION,        // BOT_VERSION in Python (single-sourced above)
   platform:       'Capital.com (Demo)', // BASE_URL in Python
-  account:        '$9,600 live',          // your account size
-  riskCap:        '10% total open',     // MAX_TOTAL_RISK_PCT * 100
+  account:        '$9,600 live',          // your account size — update if needed
+  riskCap:        '10% total open',     // MAX_TOTAL_RISK_PCT = 0.10
   circuitBreaker: '−2% daily / −3% 5-day', // DAILY_LOSS_LIMIT_PCT / CIRCUIT_BREAKER_THRESHOLD
-  beBuffer:       '25% ATR beyond entry',   // BE_PROFIT_BUFFER_PCT * 100
-  checkInterval:  '30min day / 5min scalper / 1H swing', // DAY_CHECK_INTERVAL / SCALPER_CHECK_INTERVAL / GS_CHECK_INTERVAL
+  beBuffer:       '25% ATR beyond entry',   // BE_PROFIT_BUFFER_PCT = 0.25
+  checkInterval:  '30min day / 5min scalper / 1H swing', // DAY_CHECK_INTERVAL=1800s / SCALPER_CHECK_INTERVAL=300s / GS_CHECK_INTERVAL=3600s
 };
 
 // ── Per-strategy config cards (shown in each bot card on Bots tab) ──
@@ -1640,16 +1653,17 @@ const BOT_INFO = {
   'BTC Day-Trade': {
     asset:    'BTCUSD',
     tf:       '4H',                     // DAY_RESOLUTION["BTCUSD"]
-    enabled:  true,                     // STRATEGY_BTC_DAY
-    backtest: '44.4%',                  // backtest win rate (9 trades)
-    size:     'ATR vol-adjusted',       // dynamic: base 0.01 BTC, scales with ATR + drawdown
-    maxPos:   1,                        // DAY_MAX_POSITIONS["BTCUSD"]
-    minScore: 6,                        // DAY_MIN_SCORE["BTCUSD"]
-    stop:     '2.0×ATR',               // DAY_ATR_STOP["BTCUSD"]
-    target:   '3.0×ATR',               // DAY_ATR_TARGET["BTCUSD"]
+    enabled:  false,                    // V3.5.0: decommissioned, replaced by BTC Hunter
+    archived: true,                     // master view: shows as archived card
+    backtest: '44.4%',                  // legacy backtest win rate (9 trades)
+    size:     'ATR vol-adjusted',
+    maxPos:   1,
+    minScore: 6,
+    stop:     '2.0×ATR',
+    target:   '3.0×ATR',
     hours:    '24/7',
     signal:   'MA crossover + RSI + MACD + Weekly trend gate (>1%)',
-    extras:   'Limit entry (0.20×ATR) · Partial close · Regime-aware sizing',
+    extras:   'Archived — replaced by BTC Hunter in V3.5.0',
   },
 
   // ── Scalper strategies ────────────────────────────────────────────
@@ -1671,31 +1685,133 @@ const BOT_INFO = {
   'BTC Scalper': {
     asset:    'BTCUSD',
     tf:       '15min',
-    enabled:  true,                     // STRATEGY_BTC_SCALP
-    backtest: '47.4%',                  // backtest win rate (78 trades)
-    size:     'Balance-scaled',         // dynamic: base 0.01 BTC, scales with balance + drawdown
-    maxPos:   2,                        // SCALPER_MAX_POSITIONS["BTC_SCALP"]
-    minScore: 4,                        // SCALPER_MIN_SCORE["BTC_SCALP"]
-    stop:     '1.5×ATR',               // SCALPER_ATR_STOP["BTC_SCALP"]
-    target:   '1.8×ATR',               // SCALPER_ATR_TARGET["BTC_SCALP"]
+    enabled:  false,                    // V3.3: disabled after negative backtest
+    archived: true,
+    backtest: '47.4%',                  // legacy backtest win rate (78 trades)
+    size:     'Balance-scaled',
+    maxPos:   2,
+    minScore: 4,
+    stop:     '1.5×ATR',
+    target:   '1.8×ATR',
     hours:    '24/7 (night score ≥5)',
     signal:   'MA + Stochastic + BB guard + Weekly momentum',
-    extras:   'Cooldown: 5 candles · Limit entry (0.15×ATR) · Night min score: 5',
+    extras:   'Archived — V3.3 backtest −$4,897 / 37% WR after three tuning passes',
   },
 
   'Oil Scalper': {
     asset:    'OIL_CRUDE',
     tf:       '15min',                  // OIL_SCALP_RESOLUTION
-    enabled:  true,                     // STRATEGY_OIL_SCALP
-    backtest: '31.4%',                  // backtest win rate (283 trades)
-    size:     'Regime-based',           // dynamic: scales with regime + drawdown
-    maxPos:   1,                        // max 1 Oil position
-    minScore: '5–7',                    // OIL_SCALP_MIN_SCORE: 5 RANGING / 6 TREND / 7 NEUTRAL
-    stop:     '1.2×ATR / 0.5×ATR',    // MEAN_REV / TRENDING
-    target:   '2.2×ATR / 2.0×ATR',    // MEAN_REV / TRENDING
-    hours:    '07:00–20:00 UTC',        // OIL_SCALP_HOURS — market closed 21:00–22:00
+    enabled:  false,                    // V3.3: disabled, replaced by OIL Precision in V3.6
+    archived: true,
+    backtest: '31.4%',                  // legacy backtest win rate (283 trades)
+    size:     'Regime-based',
+    maxPos:   1,
+    minScore: '5–7',
+    stop:     '1.2×ATR / 0.5×ATR',
+    target:   '2.2×ATR / 2.0×ATR',
+    hours:    '07:00–20:00 UTC',
     signal:   'Regime-switching: RANGING→BB touch+RSI / TRENDING→Donchian break',
-    extras:   'Cooldown: 4 candles · Max 3 losses/day · Market-closed guard (21:00 UTC)',
+    extras:   'Archived — replaced by OIL Precision (mean-reversion only) in V3.6',
+  },
+
+  // ── NEW V3.5.0: BTC Hunter (replaces BTC Day-Trade) ─────────────
+  'BTC Hunter': {
+    asset:    'BTCUSD',
+    tf:       'Daily',                  // BTCH Donchian daily breakout
+    enabled:  true,                     // STRATEGY_BTC_HUNTER
+    backtest: '66.7%',                  // V3.6 backtest: +$325.35 / 3 trades / +$108.74 EV
+    btNetPnl: '+$325.35',
+    btTrades: 3,
+    btEvPerTrade: '+$108.74',
+    btVerdict: '🎯 excellent',
+    size:     'ATR-based (4% risk)',    // BTCH_RISK_PER_TRADE_PCT
+    maxPos:   1,
+    minScore: null,
+    stop:     '2.5×ATR',               // BTCH_ATR_STOP_MULT
+    target:   '4.0×ATR',               // BTCH_ATR_TARGET_MULT
+    hours:    '24/7',
+    signal:   '20-day Donchian breakout + range expansion + volume confirmation + MA50 slope alignment',
+    extras:   'Partial close 50% at 2×ATR · Chandelier trail (2.5×ATR) · BE lock with 10% buffer · EV-accounting fix (V3.5.0)',
+  },
+
+  // ── NEW V3.6: OIL Precision (replaces Oil Scalper) ──────────────
+  'OIL Precision': {
+    asset:    'OIL_CRUDE',
+    tf:       '15min',
+    enabled:  true,                     // STRATEGY_OIL_PRECISION (re-enabled V3.6.0 with V3.5.1 config)
+    backtest: '37.5%',                  // V3.6 backtest: −$63.15 / 8 trades / −$1.79 EV
+    btNetPnl: '−$63.15',
+    btTrades: 8,
+    btEvPerTrade: '−$1.79',
+    btVerdict: '⚠️ weak — near breakeven',
+    size:     'Balance-scaled (1% risk)',
+    maxPos:   2,
+    minScore: 6,
+    stop:     '1.0×ATR',
+    target:   '1.5×ATR',                // 1:1.5 R:R
+    hours:    '08:00–16:00 UTC',        // London + NY overlap
+    signal:   'Mean-reversion: BB edge touch + RSI extreme + reversal candle (triple-confirm) · Daily trend filter · EIA blackout Wed 14:00-15:30 UTC',
+    extras:   'Partial close 50% at 1×ATR · Max 2h hold · 90min cooldown · Max 2 losses/day',
+  },
+
+  // ── NEW V3.3: NAS100 Scalper (sw framework) ─────────────────────
+  'NAS100 Scalper': {
+    asset:    'NAS100',
+    tf:       '15min',
+    enabled:  true,                     // STRATEGY_NAS100_SCALP
+    backtest: '60.0%',                  // V3.6 backtest: +$1,968.17 / 40 trades / +$12.97 EV
+    btNetPnl: '+$1,968.17',
+    btTrades: 40,
+    btEvPerTrade: '+$12.97',
+    btVerdict: '🎯 excellent',
+    size:     'Volatility-scaled (1% risk)',
+    maxPos:   2,
+    minScore: 4,
+    stop:     '0.8×ATR',
+    target:   '2.0×ATR',
+    hours:    '13:30–20:00 UTC',        // US session
+    signal:   'Pullback-in-trend: 100×15min EMA trend + BB + RSI + Stochastic confluence scoring',
+    extras:   'Partial close 50% at 1×ATR · Chandelier trail · 2 candle (30min) cooldown',
+  },
+
+  // ── NEW V3.3: Silver Swing Hunter (sw framework port of GoldSwing) ─
+  'Silver Swing Hunter': {
+    asset:    'SILVER',
+    tf:       '4H signal · 1H exec',
+    enabled:  true,                     // STRATEGY_SILVER_SWING
+    backtest: '46.0%',                  // V3.6 backtest: +$33.47 / 126 trades / +$0.27 EV
+    btNetPnl: '+$33.47',
+    btTrades: 126,
+    btEvPerTrade: '+$0.27',
+    btVerdict: '📈 EV positive',
+    size:     'ATR-based (1% risk)',
+    maxPos:   2,
+    minScore: 6,
+    stop:     '1.5×ATR',
+    target:   '2.5×ATR',
+    hours:    '06:00–20:00 UTC',
+    signal:   '4H+1H multi-timeframe scoring (BB, RSI, Stochastic, volume, MA alignment) · prime window bonus',
+    extras:   'Partial close 50% at 1.5×ATR · Trail to BE at 1.8×ATR · Broker min 0.5 (V3.6 fix)',
+  },
+
+  // ── NEW V3.3: US500 Swing Hunter (sw framework) ─────────────────
+  'US500 Swing Hunter': {
+    asset:    'US500',
+    tf:       '4H signal · 1H exec',
+    enabled:  true,                     // STRATEGY_US500_SWING
+    backtest: '44.0%',                  // V3.6 backtest: +$70.62 / 100 trades / +$0.71 EV
+    btNetPnl: '+$70.62',
+    btTrades: 100,
+    btEvPerTrade: '+$0.71',
+    btVerdict: '📈 EV positive',
+    size:     'ATR-based (1% risk)',
+    maxPos:   2,
+    minScore: 6,
+    stop:     '1.5×ATR',
+    target:   '2.5×ATR',
+    hours:    '13:30–21:00 UTC',        // US cash session
+    signal:   '4H+1H multi-timeframe scoring (BB, RSI, Stochastic, volume, MA alignment) · US RTH only',
+    extras:   'Partial close 50% at 1.5×ATR · Trail to BE at 1.8×ATR · Weekend RTH gate',
   },
 
   // ── Forex daily breakout strategies ──────────────────────────────
@@ -2077,7 +2193,7 @@ function parseFundNav(rows){
     totalReturn:     find('total return'),
     netDeposits:     find('net deposits'),
     inceptionDate:   data['inception date'] || data['inception'],
-    bot:             data['bot'] || 'UnifiedTrader_V2.6.3',
+    bot:             data['bot'] || `UnifiedTrader_${BOT_FILE_TAG}`,
     account:         data['account'] || 'Capital.com Demo',
     // Unit NAV fields (Section B in Fund NAV sheet)
     startingUnitPrice: find('starting unit price') || 1.0,
@@ -2833,15 +2949,39 @@ function _botSortTier(status) {
 
 function renderBots(trades){
   const perBot=computePerBot(trades);
-  const allNames=[...new Set([...Object.keys(BOT_COLORS),...perBot.map(b=>b.strategy)])];
   const openPos=(window._allData||{}).openPos||[];
   const statuses=computeBotStatuses(openPos, trades);
   // Build per-bot unrealised P&L from open positions
   const unrealisedByBot={};
   openPos.forEach(p=>{const s=p.strategy||'Unknown';unrealisedByBot[s]=(unrealisedByBot[s]||0)+(p.unrealised||0);});
 
+  // Access-tier filtering:
+  //   master   → show every known bot (archived, disabled, offline — all visible)
+  //   standard → only bots that are enabled AND currently active/running
+  let allNames=[...new Set([...Object.keys(BOT_COLORS),...perBot.map(b=>b.strategy)])];
+  if (!isMasterAccess) {
+    allNames = allNames.filter(name => {
+      const info = BOT_INFO[name];
+      if (!info) return false;
+      if (info.archived === true) return false;          // archived hidden from standard
+      if (info.enabled !== true) return false;           // disabled hidden from standard
+      const s = statuses[name] || 'offline';
+      return s === 'active' || s === 'online';           // must be running
+    });
+  }
+
   // Sort: active trading → traded today → online → offline
   allNames.sort((a,b) => _botSortTier(statuses[a]||'offline') - _botSortTier(statuses[b]||'offline'));
+
+  // Toggle auxiliary master-only page elements
+  const sysBanner = $('bot-system-banner');
+  if (sysBanner)    sysBanner.style.display = isMasterAccess ? '' : 'none';
+  const sysLabel  = $('bot-system-banner-label');
+  if (sysLabel)     sysLabel.textContent = `System Configuration · NSC UnifiedTrader v${BOT_VERSION}`;
+  const cmpCard = $('bot-compare-card');
+  if (cmpCard)      cmpCard.style.display = isMasterAccess ? '' : 'none';
+  const wrCard  = $('bot-winrate-card');
+  if (wrCard)       wrCard.style.display = isMasterAccess ? '' : 'none';
 
   $('bot-cards-container').innerHTML = allNames.map(name=>{
     const live=perBot.find(b=>b.strategy===name)||{trades:[],pnl:0,wins:0,losses:0};
@@ -2854,32 +2994,35 @@ function renderBots(trades){
     const col=BOT_COLORS[name]||'#5a6472';
     const icon=BOT_ICONS[name]||'📊';
     const info=BOT_INFO[name]||null;
+    const archived = info && info.archived === true;
     const st=getBotStatusDot(statuses[name]||'idle');
     const dotId='bot-status-'+name.replace(/\s+/g,'-');
     const lastTrade=live.trades.length?live.trades.slice().sort((a,b)=>String(b.timestamp||'').localeCompare(String(a.timestamp||'')))[0]:null;
     const lastTradeStr=lastTrade?String(lastTrade.timestamp||'').slice(0,10):'No trades';
     return `
-    <div class="bot-card" style="border-color:${statuses[name]==='active'?col+'44':'rgba(255,255,255,0.06)'}">
+    <div class="bot-card" style="border-color:${statuses[name]==='active'?col+'44':'rgba(255,255,255,0.06)'};${archived?'opacity:0.68;':''}">
       <div class="bot-header">
         <div class="bot-icon" style="background:${col}22;border:1px solid ${col}44">${icon}</div>
         <div style="flex:1;">
-          <div style="display:flex;align-items:center;gap:7px;">
+          <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
             <div class="bot-name">${name}</div>
             <div id="${dotId}" class="bot-status-dot${st.pulse?' bot-status-pulse':''}" style="background:${st.color};box-shadow:${st.pulse?`0 0 0 3px ${st.color}33`:'none'}" title="${st.label}"></div>
+            ${archived?`<span style="font-size:8.5px;padding:1px 6px;border-radius:4px;background:rgba(255,255,255,0.05);color:var(--muted);letter-spacing:.06em;text-transform:uppercase;">Archived</span>`:''}
           </div>
           <div class="bot-asset">${total} trades · last: ${lastTradeStr}</div>
         </div>
       </div>
       <div class="bot-pnl" style="color:${live.pnl>=0?'var(--green)':'var(--red)'}">${sgn(live.pnl)}CHF ${fmt(Math.abs(live.pnl))}</div>
       ${(unrealisedByBot[name]||0)!==0?`<div style="font-size:11px;font-family:var(--mono);color:${(unrealisedByBot[name]||0)>=0?'var(--green)':'var(--red)'};margin-bottom:4px;">${sgn(unrealisedByBot[name]||0)}CHF ${fmt(Math.abs(unrealisedByBot[name]||0))} <span style="color:var(--muted);font-size:9px;">open</span></div>`:''}
+      ${isMasterAccess?`
       <div style="font-size:10px;color:var(--muted);">Win rate</div>
       <div class="wr-bar"><div class="wr-fill" style="width:${(wr*100).toFixed(0)}%;background:${col}"></div></div>
       <div class="bot-stats-row">
         <div class="bot-stat-box"><div class="bot-stat-label">Win%</div><div class="bot-stat-val">${(wr*100).toFixed(0)}%</div></div>
         <div class="bot-stat-box"><div class="bot-stat-label">EV/trade</div><div class="bot-stat-val" style="color:${ev>=0?'var(--green)':'var(--red)'}">${sgn(ev)}CHF ${fmt(Math.abs(ev))}</div></div>
         <div class="bot-stat-box"><div class="bot-stat-label">PF</div><div class="bot-stat-val">${typeof pf==='number'?pf.toFixed(2)+'×':pf}</div></div>
-      </div>
-      ${info ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:5px;">
+      </div>`:''}
+      ${(isMasterAccess && info) ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:5px;">
         <div class="bot-info-row" style="font-size:10px;display:flex;justify-content:space-between;"><span style="color:var(--muted);flex-shrink:0;">Asset / TF</span><span class="bot-info-val" style="font-family:var(--mono);color:var(--text);">${info.asset} · ${info.tf}</span></div>
         <div class="bot-info-row" style="font-size:10px;display:flex;justify-content:space-between;"><span style="color:var(--muted);flex-shrink:0;">Size / Max Pos</span><span class="bot-info-val" style="font-family:var(--mono);color:var(--text);">${info.size} · max ${info.maxPos}</span></div>
         ${info.minScore!==null?`<div class="bot-info-row" style="font-size:10px;display:flex;justify-content:space-between;"><span style="color:var(--muted);flex-shrink:0;">Min Score</span><span class="bot-info-val" style="font-family:var(--mono);color:var(--orange);">${typeof info.minScore==='number'?'≥'+info.minScore:info.minScore}</span></div>`:''}
@@ -2887,21 +3030,33 @@ function renderBots(trades){
         <div class="bot-info-row" style="font-size:10px;display:flex;justify-content:space-between;"><span style="color:var(--muted);flex-shrink:0;">Hours (UTC)</span><span class="bot-info-val" style="font-family:var(--mono);color:var(--text);">${info.hours}</span></div>
         <div style="font-size:9px;color:var(--muted);margin-top:3px;line-height:1.5;">${info.signal}</div>
         <div style="font-size:9px;color:var(--blue);line-height:1.5;">${info.extras}</div>
-        ${info.backtest?`<div class="bot-info-row" style="font-size:10px;display:flex;justify-content:space-between;margin-top:2px;"><span style="color:var(--muted);flex-shrink:0;">Backtest Win Rate</span><span class="bot-info-val" style="font-family:var(--mono);color:var(--green);">${info.backtest}</span></div>`:''}
+        ${(info.btNetPnl || info.btTrades || info.btEvPerTrade || info.btVerdict) ? `
+        <div style="margin-top:6px;padding:8px 10px;background:rgba(91,156,246,0.05);border:1px solid rgba(91,156,246,0.15);border-radius:6px;">
+          <div style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:5px;">V3.6 Backtest</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:10px;font-family:var(--mono);">
+            ${info.btNetPnl?`<div><div style="font-size:8.5px;color:var(--muted);">Net P&L</div><div style="color:${String(info.btNetPnl).startsWith('−')||String(info.btNetPnl).startsWith('-')?'var(--red)':'var(--green)'};">${info.btNetPnl}</div></div>`:''}
+            ${info.btTrades!=null?`<div><div style="font-size:8.5px;color:var(--muted);">Trades</div><div style="color:var(--text);">${info.btTrades}</div></div>`:''}
+            ${info.btEvPerTrade?`<div><div style="font-size:8.5px;color:var(--muted);">EV/trade</div><div style="color:${String(info.btEvPerTrade).startsWith('−')||String(info.btEvPerTrade).startsWith('-')?'var(--red)':'var(--green)'};">${info.btEvPerTrade}</div></div>`:''}
+          </div>
+          ${info.btVerdict?`<div style="font-size:9.5px;color:var(--text);margin-top:6px;">${info.btVerdict}</div>`:''}
+          ${info.backtest?`<div style="font-size:8.5px;color:var(--muted);margin-top:2px;">Backtest WR · <span style="color:var(--green);font-family:var(--mono);">${info.backtest}</span></div>`:''}
+        </div>` : (info.backtest?`<div class="bot-info-row" style="font-size:10px;display:flex;justify-content:space-between;margin-top:2px;"><span style="color:var(--muted);flex-shrink:0;">Backtest Win Rate</span><span class="bot-info-val" style="font-family:var(--mono);color:var(--green);">${info.backtest}</span></div>`:'')}
       </div>` : ''}
     </div>`;
   }).join('');
 
-  const lbl=allNames.map(n=>n.replace(' Day-Trade','').replace(' Breakout','').replace(' Scalper','S'));
-  const vals=allNames.map(n=>{const b=perBot.find(x=>x.strategy===n);return b?b.pnl:0;});
-  makeChart('botCompareChart','bar',
-    {labels:lbl,datasets:[{data:vals,backgroundColor:vals.map(v=>v>=0?'rgba(45,212,160,0.7)':'rgba(240,92,106,0.7)'),borderRadius:10,borderSkipped:false}]},
-    {plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#5a6472',font:{size:9}},grid:{display:false}},y:{ticks:{color:'#5a6472',callback:v=>'CHF '+fmt(v)},grid:{color:'rgba(255,255,255,0.04)'}}}});
+  if (isMasterAccess) {
+    const lbl=allNames.map(n=>n.replace(' Day-Trade','').replace(' Breakout','').replace(' Scalper','S'));
+    const vals=allNames.map(n=>{const b=perBot.find(x=>x.strategy===n);return b?b.pnl:0;});
+    makeChart('botCompareChart','bar',
+      {labels:lbl,datasets:[{data:vals,backgroundColor:vals.map(v=>v>=0?'rgba(45,212,160,0.7)':'rgba(240,92,106,0.7)'),borderRadius:10,borderSkipped:false}]},
+      {plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#5a6472',font:{size:9}},grid:{display:false}},y:{ticks:{color:'#5a6472',callback:v=>'CHF '+fmt(v)},grid:{color:'rgba(255,255,255,0.04)'}}}});
 
-  const wrVals=allNames.map(n=>{const b=perBot.find(x=>x.strategy===n);return b&&b.trades.length?(b.wins/b.trades.length*100):0;});
-  makeChart('botWinRateChart','bar',
-    {labels:lbl,datasets:[{data:wrVals,backgroundColor:allNames.map(n=>BOT_COLORS[n]||'#5a6472'),borderRadius:8,borderSkipped:false}]},
-    {plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#5a6472',font:{size:9}},grid:{display:false}},y:{min:0,max:100,ticks:{color:'#5a6472',callback:v=>v+'%'},grid:{color:'rgba(255,255,255,0.04)'}}}});
+    const wrVals=allNames.map(n=>{const b=perBot.find(x=>x.strategy===n);return b&&b.trades.length?(b.wins/b.trades.length*100):0;});
+    makeChart('botWinRateChart','bar',
+      {labels:lbl,datasets:[{data:wrVals,backgroundColor:allNames.map(n=>BOT_COLORS[n]||'#5a6472'),borderRadius:8,borderSkipped:false}]},
+      {plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#5a6472',font:{size:9}},grid:{display:false}},y:{min:0,max:100,ticks:{color:'#5a6472',callback:v=>v+'%'},grid:{color:'rgba(255,255,255,0.04)'}}}});
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -4100,7 +4255,7 @@ function exportPDF(){
   @media print{body{padding:16px;}button{display:none;}}
   </style></head><body>
   <button onclick="window.print()" style="margin-bottom:16px;padding:8px 16px;background:#0e7490;color:#fff;border:none;border-radius:6px;cursor:pointer;">Print / Save PDF</button>
-  <h1>North Star Capital</h1><div class="sub">UnifiedTrader_V2.6.3 · Capital.com Demo · Generated ${new Date().toLocaleDateString('en-GB')}</div>
+  <h1>North Star Capital</h1><div class="sub">UnifiedTrader_${BOT_FILE_TAG} · Capital.com Demo · Generated ${new Date().toLocaleDateString('en-GB')}</div>
   <div class="grid">
     <div class="card"><div class="label">Fund NAV</div><div class="val">$${fmt(nav)}</div></div>
     <div class="card"><div class="label">Total P&L</div><div class="val ${st.totalPnl>=0?'green':'red'}">${sgn(st.totalPnl)}CHF ${fmt(Math.abs(st.totalPnl))}</div></div>
@@ -4116,7 +4271,7 @@ function exportPDF(){
   <tbody>${(d.trades||[]).slice(-25).reverse().map(t=>`<tr><td>${t.num}</td><td>${String(t.timestamp||'').slice(0,10)}</td><td>${t.strategy}</td><td>${t.asset}</td><td>${t.direction}</td><td>${fmtP(t.entry)}</td><td>${fmtP(t.exit)}</td><td style="color:${t.pnl>=0?'#16a34a':'#dc2626'}">${sgn(t.pnl)}CHF ${fmt(Math.abs(t.pnl))}</td><td>${t.exitType}</td></tr>`).join('')||'<tr><td colspan=9>No trades yet</td></tr>'}</tbody>
   </table>
   <div style="margin-top:32px;font-size:10px;color:#aaa;border-top:1px solid #eee;padding-top:12px;display:flex;justify-content:space-between;">
-    <span>© ${new Date().getFullYear()} North Star Capital · Authorised users only</span><span>UnifiedTrader_V2.6.3</span>
+    <span>© ${new Date().getFullYear()} North Star Capital · Authorised users only</span><span>UnifiedTrader_${BOT_FILE_TAG}</span>
   </div></body></html>`);
   win.document.close();
 }
@@ -5131,7 +5286,7 @@ function generateStatement() {
     <h2>Capital Account Statement</h2>
     <p>Statement Date: ${stmtDate}</p>
     <p>Generated: ${new Date().toLocaleString('en-GB',{timeZone:'Europe/Zurich'})} CEST</p>
-    <p style="margin-top:6px;font-size:10px;background:#f5f7fa;padding:4px 10px;border-radius:4px;border:1px solid #e5eaf2;">Bot: UnifiedTrader_V2.6.3</p>
+    <p style="margin-top:6px;font-size:10px;background:#f5f7fa;padding:4px 10px;border-radius:4px;border:1px solid #e5eaf2;">Bot: UnifiedTrader_${BOT_FILE_TAG}</p>
   </div>
 </div>
 
