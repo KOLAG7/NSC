@@ -813,8 +813,8 @@ body.privacy-on .inv-name-blur:hover{filter:blur(0);}
         </div>
         <div style="display:flex;flex-direction:column;gap:3px;padding:8px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;min-width:110px;">
           <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">Account Size</div>
-          <div style="font-size:12px;font-family:var(--mono);color:var(--silver2);">250 CHF</div>
-          <div style="font-size:10px;color:var(--muted);">Live capital</div>
+          <div style="font-size:12px;font-family:var(--mono);color:var(--silver2);">$1,000</div>
+          <div style="font-size:10px;color:var(--muted);">Demo capital</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:3px;padding:8px 12px;background:rgba(240,92,106,0.06);border:1px solid rgba(240,92,106,0.18);border-radius:8px;min-width:110px;">
           <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">Risk Cap</div>
@@ -833,8 +833,8 @@ body.privacy-on .inv-name-blur:hover{filter:blur(0);}
         </div>
         <div style="display:flex;flex-direction:column;gap:3px;padding:8px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px;min-width:130px;">
           <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;">Check Cycle</div>
-          <div style="font-size:12px;font-family:var(--mono);color:var(--text);">30min day</div>
-          <div style="font-size:10px;color:var(--muted);">5min scalper</div>
+          <div style="font-size:12px;font-family:var(--mono);color:var(--text);">30min day · 5min scalp</div>
+          <div style="font-size:10px;color:var(--muted);">1H swing</div>
         </div>
       </div>
     </div>
@@ -1568,8 +1568,7 @@ const BOT_COLORS = {
   'Oil Day-Trade':     '#c8a96e',
   'Gold Scalper':      '#f0d060',
   'BTC Scalper':       '#f7931a',
-  'Oil Scalper':       '#a8c48a',   // archived V3.5
-  'OIL Precision':     '#a8c48a',   // new V3.6 (re-enabled V3.5.1 config)
+  'Oil Scalper':       '#a8c48a',   // V3.6 Precision (rebranded; Python key unchanged)
   'NAS100 Scalper':    '#6d7bff',
   'Silver Swing Hunter':'#c0c0c0',
   'US500 Swing Hunter':'#9fa8b0',
@@ -1578,9 +1577,26 @@ const BOT_COLORS = {
   'GBPUSD Breakout':   '#2dd4a0',
   'Gold Swing Hunter': '#d4af37',
 };
+// botLabel(key) — single source of truth for how a strategy name is rendered
+// across the dashboard. The `key` is the Python-canonical strategy string
+// (what log_trade_to_sheets writes); `displayName` overrides it in the UI
+// when a card has been rebranded (e.g. Python "Oil Scalper" → UI "Oil Precision").
+// Attribution (position lookups, colour, icon) always uses the key; only
+// human-facing labels use botLabel().
+function botLabel(key) {
+  if (!key) return 'Unknown';
+  const info = BOT_INFO[key];
+  return (info && info.displayName) ? info.displayName : key;
+}
+
+function escapeHTML(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
 const BOT_ICONS = {
   'Gold Day-Trade':'🥇','BTC Day-Trade':'₿','BTC Hunter':'🎯','Oil Day-Trade':'🛢️',
-  'Gold Scalper':'⚡','BTC Scalper':'⚡','Oil Scalper':'🛢️','OIL Precision':'🎯',
+  'Gold Scalper':'⚡','BTC Scalper':'⚡','Oil Scalper':'🎯',
   'NAS100 Scalper':'📊','Silver Swing Hunter':'🥈','US500 Swing Hunter':'📈',
   'EURUSD Breakout':'💶','USDJPY Breakout':'💴','GBPUSD Breakout':'💷',
   'Gold Swing Hunter':'🏹',
@@ -1588,15 +1604,15 @@ const BOT_ICONS = {
 
 // ╔══════════════════════════════════════════════════════════════════╗
 // ║  BOT INFO — EDIT THIS SECTION TO UPDATE THE BOTS TAB           ║
-// ║  Mirrors UnifiedTrader_V3.6.py config. Update when you change  ║
+// ║  Mirrors the live UnifiedTrader Python config. Update when you ║
 // ║  the Python file to keep the dashboard in sync.                ║
 // ╚══════════════════════════════════════════════════════════════════╝
 
 // ── Single-source version string (mirrors Python BOT_VERSION) ────
 //   Bump this one constant whenever you bump BOT_VERSION in the .py.
 //   BOT_FILE_TAG tracks the full version so it matches the Python
-//   filename convention (UnifiedTrader_V3.6.1.py etc.).
-const BOT_VERSION  = '3.6.1';
+//   filename convention (UnifiedTrader_V3.6.2.py etc.).
+const BOT_VERSION  = '3.6.2';
 const BOT_FILE_TAG = 'V' + BOT_VERSION;
 
 // ── System-level info (top banner on Bots tab — MASTER VIEW ONLY) ─
@@ -1604,7 +1620,7 @@ const BOT_FILE_TAG = 'V' + BOT_VERSION;
 const BOT_META = {
   version:        BOT_VERSION,        // BOT_VERSION in Python (single-sourced above)
   platform:       'Capital.com (Demo)', // BASE_URL in Python
-  account:        '$9,600 live',          // your account size — update if needed
+  account:        '$1,000 demo',          // your account size — update if needed
   riskCap:        '10% total open',     // MAX_TOTAL_RISK_PCT = 0.10
   circuitBreaker: '−2% daily / −3% 5-day', // DAILY_LOSS_LIMIT_PCT / CIRCUIT_BREAKER_THRESHOLD
   beBuffer:       '25% ATR beyond entry',   // BE_PROFIT_BUFFER_PCT = 0.25
@@ -1622,8 +1638,9 @@ const BOT_INFO = {
   'Oil Day-Trade': {
     asset:    'OIL_CRUDE',
     tf:       '30min',
-    enabled:  false,                    // Not currently active
-    backtest: null,                     // win rate % — run backtest to populate
+    enabled:  false,                    // Placeholder — never deployed
+    archived: true,                     // master view: shows as archived card
+    backtest: null,
     size:     '—',
     maxPos:   1,
     minScore: null,
@@ -1631,7 +1648,7 @@ const BOT_INFO = {
     target:   '—',
     hours:    '—',
     signal:   'Strategy reserved — not currently deployed',
-    extras:   '',
+    extras:   'Archived — placeholder slot, no strategy implementation',
   },
 
   // ── Day-trade strategies ──────────────────────────────────────────
@@ -1698,20 +1715,28 @@ const BOT_INFO = {
     extras:   'Archived — V3.3 backtest −$4,897 / 37% WR after three tuning passes',
   },
 
+  // 'Oil Scalper' is the canonical Python strategy name (log_trade_to_sheets
+  // writes this string for STRATEGY_OIL_PRECISION). The card is branded as
+  // "Oil Precision" in V3.6 — `displayName` drives the card title while the
+  // key stays aligned with Python so position/trade attribution works.
   'Oil Scalper': {
+    displayName: 'Oil Precision',
     asset:    'OIL_CRUDE',
-    tf:       '15min',                  // OIL_SCALP_RESOLUTION
-    enabled:  false,                    // V3.3: disabled, replaced by OIL Precision in V3.6
-    archived: true,
-    backtest: '31.4%',                  // legacy backtest win rate (283 trades)
-    size:     'Regime-based',
-    maxPos:   1,
-    minScore: '5–7',
-    stop:     '1.2×ATR / 0.5×ATR',
-    target:   '2.2×ATR / 2.0×ATR',
-    hours:    '07:00–20:00 UTC',
-    signal:   'Regime-switching: RANGING→BB touch+RSI / TRENDING→Donchian break',
-    extras:   'Archived — replaced by OIL Precision (mean-reversion only) in V3.6',
+    tf:       '15min',
+    enabled:  true,                     // STRATEGY_OIL_PRECISION (V3.6.0 re-enabled)
+    backtest: '37.5%',                  // V3.6 backtest: −$63.15 / 8 trades / −$1.79 EV
+    btNetPnl: '−$63.15',
+    btTrades: 8,
+    btEvPerTrade: '−$1.79',
+    btVerdict: '⚠️ weak — near breakeven',
+    size:     'Balance-scaled (1% risk)',
+    maxPos:   2,
+    minScore: 6,
+    stop:     '1.0×ATR',
+    target:   '1.5×ATR',                // 1:1.5 R:R
+    hours:    '08:00–16:00 UTC',        // London + NY overlap
+    signal:   'Mean-reversion: BB edge touch + RSI extreme + reversal candle (triple-confirm) · Daily trend filter · EIA blackout Wed 14:00–15:30 UTC',
+    extras:   'Partial close 50% at 1×ATR · Max 2h hold · 90min cooldown · Max 2 losses/day',
   },
 
   // ── NEW V3.5.0: BTC Hunter (replaces BTC Day-Trade) ─────────────
@@ -1732,26 +1757,6 @@ const BOT_INFO = {
     hours:    '24/7',
     signal:   '20-day Donchian breakout + range expansion + volume confirmation + MA50 slope alignment',
     extras:   'Partial close 50% at 2×ATR · Chandelier trail (2.5×ATR) · BE lock with 10% buffer · EV-accounting fix (V3.5.0)',
-  },
-
-  // ── NEW V3.6: OIL Precision (replaces Oil Scalper) ──────────────
-  'OIL Precision': {
-    asset:    'OIL_CRUDE',
-    tf:       '15min',
-    enabled:  true,                     // STRATEGY_OIL_PRECISION (re-enabled V3.6.0 with V3.5.1 config)
-    backtest: '37.5%',                  // V3.6 backtest: −$63.15 / 8 trades / −$1.79 EV
-    btNetPnl: '−$63.15',
-    btTrades: 8,
-    btEvPerTrade: '−$1.79',
-    btVerdict: '⚠️ weak — near breakeven',
-    size:     'Balance-scaled (1% risk)',
-    maxPos:   2,
-    minScore: 6,
-    stop:     '1.0×ATR',
-    target:   '1.5×ATR',                // 1:1.5 R:R
-    hours:    '08:00–16:00 UTC',        // London + NY overlap
-    signal:   'Mean-reversion: BB edge touch + RSI extreme + reversal candle (triple-confirm) · Daily trend filter · EIA blackout Wed 14:00-15:30 UTC',
-    extras:   'Partial close 50% at 1×ATR · Max 2h hold · 90min cooldown · Max 2 losses/day',
   },
 
   // ── NEW V3.3: NAS100 Scalper (sw framework) ─────────────────────
@@ -2768,7 +2773,7 @@ function renderOverview(trades, openPos, fundNav){
     rowL('Gross Lost','-CHF '+fmt(st.grossLoss),'color:var(--red)');
 
   // W/L viz
-  $('wl-viz').innerHTML = trades.slice(-80).map(t=>`<div class="wl-dot" style="background:${t.pnl>0?'var(--green)':t.pnl<0?'var(--red)':'rgba(255,255,255,0.15)'}" title="${t.strategy} ${sgn(t.pnl)}CHF ${fmt(Math.abs(t.pnl))}"></div>`).join('');
+  $('wl-viz').innerHTML = trades.slice(-80).map(t=>`<div class="wl-dot" style="background:${t.pnl>0?'var(--green)':t.pnl<0?'var(--red)':'rgba(255,255,255,0.15)'}" title="${botLabel(t.strategy)} ${sgn(t.pnl)}CHF ${fmt(Math.abs(t.pnl))}"></div>`).join('');
 
   // Risk metrics — BSC-quality full suite
   $('risk-metrics').innerHTML =
@@ -3005,7 +3010,7 @@ function renderBots(trades){
         <div class="bot-icon" style="background:${col}22;border:1px solid ${col}44">${icon}</div>
         <div style="flex:1;">
           <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
-            <div class="bot-name">${name}</div>
+            <div class="bot-name">${botLabel(name)}</div>
             <div id="${dotId}" class="bot-status-dot${st.pulse?' bot-status-pulse':''}" style="background:${st.color};box-shadow:${st.pulse?`0 0 0 3px ${st.color}33`:'none'}" title="${st.label}"></div>
             ${archived?`<span style="font-size:8.5px;padding:1px 6px;border-radius:4px;background:rgba(255,255,255,0.05);color:var(--muted);letter-spacing:.06em;text-transform:uppercase;">Archived</span>`:''}
           </div>
@@ -3089,8 +3094,8 @@ function renderOpenPos(openPos){
     <tr class="pos-row ${p.unrealised>0?'row-profit':p.unrealised<0?'row-loss':''}" onclick="togglePosRow(${i})" id="pos-main-${i}">
       <td style="color:var(--muted);font-size:10px;">${p.num}</td>
       <td style="color:var(--muted);font-size:10px;">${String(p.entryTime||'').slice(0,16)}</td>
-      <td style="color:${BOT_COLORS[p.strategy]||'var(--text)'};font-weight:600;font-size:12px;">${p.strategy}</td>
-      <td>${p.asset}</td>
+      <td style="color:${BOT_COLORS[p.strategy]||'var(--text)'};font-weight:600;font-size:12px;">${escapeHTML(botLabel(p.strategy))}</td>
+      <td>${escapeHTML(p.asset)}</td>
       <td><span class="badge ${p.direction==='BUY'?'bg':'br'}">${p.direction}</span></td>
       <td style="font-family:var(--mono)">${p.entry>0?fmtP(p.entry):'—'}</td>
       <td style="font-family:var(--mono);color:${clr(p.unrealised)};font-weight:600">${p.current>0?fmtP(p.current):'—'}</td>
@@ -3098,7 +3103,7 @@ function renderOpenPos(openPos){
       <td style="color:var(--red);font-family:var(--mono);font-size:11px;">${p.stop>0?fmtP(p.stop):'—'}</td>
       <td style="color:var(--green);font-family:var(--mono);font-size:11px;">${p.tp>0?fmtP(p.tp):'—'}</td>
       <td style="color:${clr(p.unrealised)};font-weight:700;font-family:var(--mono)">${sgn(p.unrealised)}CHF ${fmt(Math.abs(p.unrealised))}</td>
-      <td style="color:${clr(p.unrealisedPct)};font-size:10px;font-family:var(--mono)">${(p.unrealisedPct*100).toFixed(2)}%</td>
+      <td style="color:${clr(p.unrealisedPct)};font-size:10px;font-family:var(--mono)">${((p.unrealisedPct||0)*100).toFixed(2)}%</td>
       <td><span class="badge bg">${p.status}</span></td>
     </tr>
     <tr id="pos-expand-${i}" class="pos-expand-row">
@@ -3110,20 +3115,20 @@ function renderOpenPos(openPos){
           <div class="pos-detail-item"><div class="pos-detail-label">Take Profit</div><div class="pos-detail-val" style="color:var(--green)">${p.tp>0?fmtP(p.tp):'—'}</div></div>
           <div class="pos-detail-item"><div class="pos-detail-label">Unrealised P&L</div><div class="pos-detail-val" style="color:${clr(p.unrealised)}">${sgn(p.unrealised)}CHF ${fmt(Math.abs(p.unrealised))}</div></div>
           <div class="pos-detail-item"><div class="pos-detail-label">Size</div><div class="pos-detail-val">${p.size}</div></div>
-          ${p.entry>0&&p.stop>0&&p.tp>0?`
+          ${(()=>{ const slD=Math.abs(p.entry-p.stop), tpD=Math.abs(p.tp-p.entry), denom=slD+tpD; if(!(p.entry>0&&p.stop>0&&p.tp>0&&denom>0)) return ''; const slPct=(slD/denom*100).toFixed(1), tpPct=(tpD/denom*100).toFixed(1), rr=slD>0?(tpD/slD).toFixed(2)+'×':'—'; return `
           <div class="pos-detail-item" style="grid-column:1/-1;">
-            <div class="pos-detail-label">Risk / Reward · ${Math.abs(p.tp-p.entry)/Math.abs(p.entry-p.stop)>0?(Math.abs(p.tp-p.entry)/Math.abs(p.entry-p.stop)).toFixed(2)+'×':'—'}</div>
+            <div class="pos-detail-label">Risk / Reward · ${rr}</div>
             <div class="risk-track">
-              <div class="risk-fill-sl" style="width:${(Math.abs(p.entry-p.stop)/(Math.abs(p.entry-p.stop)+Math.abs(p.tp-p.entry))*100).toFixed(1)}%"></div>
-              <div class="risk-fill-tp" style="width:${(Math.abs(p.tp-p.entry)/(Math.abs(p.entry-p.stop)+Math.abs(p.tp-p.entry))*100).toFixed(1)}%;left:${(Math.abs(p.entry-p.stop)/(Math.abs(p.entry-p.stop)+Math.abs(p.tp-p.entry))*100).toFixed(1)}%"></div>
-              <div class="risk-marker" style="left:${(Math.abs(p.entry-p.stop)/(Math.abs(p.entry-p.stop)+Math.abs(p.tp-p.entry))*100).toFixed(1)}%"></div>
+              <div class="risk-fill-sl" style="width:${slPct}%"></div>
+              <div class="risk-fill-tp" style="width:${tpPct}%;left:${slPct}%"></div>
+              <div class="risk-marker" style="left:${slPct}%"></div>
             </div>
             <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:5px;font-family:var(--mono);">
               <span style="color:var(--red)">SL ${fmtP(p.stop)}</span>
               <span style="color:var(--gold)">Entry ${fmtP(p.entry)}</span>
               <span style="color:var(--green)">TP ${fmtP(p.tp)}</span>
             </div>
-          </div>` : ''}
+          </div>`; })()}
         </div>
       </td>
     </tr>`).join('');
@@ -3143,7 +3148,7 @@ function renderTrades(trades){
   const strategies=[...new Set(trades.map(t=>t.strategy))].filter(Boolean);
   const chips=['All',...strategies];
   $('trade-chips').innerHTML=chips.map((c,i)=>
-    `<div class="chip${i===0?' active':''}" onclick="filterTrades('${c.replace(/'/g,"\\'")}',this)">${c}</div>`
+    `<div class="chip${i===0?' active':''}" data-strategy="${escapeHTML(c)}" onclick="filterTrades('${c.replace(/'/g,"\\'")}',this)">${c==='All'?c:escapeHTML(botLabel(c))}</div>`
   ).join('');
   renderTradeTable(trades);
 }
@@ -3161,7 +3166,7 @@ function applyTradeFilters(){
   const exitF=(($('trade-filter-exit')||{}).value||'');
   const dirF=(($('trade-filter-dir')||{}).value||'');
   const chip=document.querySelector('#trade-chips .chip.active');
-  const stratF=chip?chip.textContent.trim():'All';
+  const stratF=chip?(chip.dataset.strategy||'All'):'All';
   let list=(window._allTrades||[]).filter(t=>{
     if(stratF!=='All'&&t.strategy!==stratF) return false;
     if(exitF&&t.exitType!==exitF) return false;
@@ -3192,7 +3197,7 @@ function sortTradeList(list){
 
 function renderTradeTable(trades){
   $('trade-count-label').textContent=`${trades.length} trades`;
-  const etClass=e=>e==='TP HIT'?'bg':e==='SL HIT'?'br':e.includes('BE')||e.includes('TRAIL')?'bblue':e.includes('CUT')||e.includes('TIME')||e.includes('EOD')?'bgray':'bgold';
+  const etClass=e=>{e=String(e||'');return e==='TP HIT'?'bg':e==='SL HIT'?'br':e.includes('BE')||e.includes('TRAIL')?'bblue':e.includes('CUT')||e.includes('TIME')||e.includes('EOD')?'bgray':'bgold';};
   if(!trades.length){
     $('trade-log-tbody').innerHTML='<tr><td colspan="13" style="text-align:center;padding:36px;color:var(--muted);">No trades yet — data appears after the bot closes its first trade</td></tr>';
     return;
@@ -3201,17 +3206,17 @@ function renderTradeTable(trades){
     <tr class="${t.pnl>0?'row-profit':t.pnl<0?'row-loss':''}">
       <td style="color:var(--muted);font-size:10px;">${t.num}</td>
       <td style="color:var(--muted);font-size:10px;">${String(t.timestamp||'').slice(0,16)}</td>
-      <td style="color:${BOT_COLORS[t.strategy]||'var(--text)'};font-weight:600;font-size:11px;">${t.strategy}</td>
-      <td>${t.asset}</td>
+      <td style="color:${BOT_COLORS[t.strategy]||'var(--text)'};font-weight:600;font-size:11px;">${escapeHTML(botLabel(t.strategy))}</td>
+      <td>${escapeHTML(t.asset)}</td>
       <td><span class="badge ${t.direction==='BUY'?'bg':'br'}">${t.direction}</span></td>
       <td style="font-family:var(--mono);font-size:11px;">${fmtP(t.entry)}</td>
       <td style="font-family:var(--mono);font-size:11px;">${fmtP(t.exit)}</td>
       <td>${t.size}</td>
       <td style="color:${clr(t.pnl)};font-weight:600;font-family:var(--mono)">${sgn(t.pnl)}CHF ${fmt(Math.abs(t.pnl))}</td>
       <td style="color:${clr(t.pnlPct)};font-size:10px;font-family:var(--mono)">${sgn(t.pnlPct)}${(Math.abs(t.pnlPct)*100).toFixed(2)}%</td>
-      <td><span class="badge ${etClass(t.exitType)}">${t.exitType||'—'}</span></td>
-      <td style="font-size:10px;color:${t.partial==='Yes'?'var(--gold2)':'var(--muted)'}">${t.partial||'—'}</td>
-      <td style="color:var(--muted);font-size:10px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${t.notes||''}">${t.notes||'—'}</td>
+      <td><span class="badge ${etClass(t.exitType)}">${escapeHTML(t.exitType||'—')}</span></td>
+      <td style="font-size:10px;color:${t.partial==='Yes'?'var(--gold2)':'var(--muted)'}">${escapeHTML(t.partial||'—')}</td>
+      <td style="color:var(--muted);font-size:10px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHTML(t.notes||'')}">${escapeHTML(t.notes||'—')}</td>
     </tr>`).join('');
 }
 
@@ -3458,7 +3463,7 @@ function buildRiskMeterHTML(openPos, nav){
     const posRiskPct=nav>0?(posRisk/nav*100):0;
     const col=BOT_COLORS[p.strategy]||'var(--text)';
     return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);">
-      <div style="flex:1;font-size:11px;color:${col};font-weight:600;">${p.strategy}</div>
+      <div style="flex:1;font-size:11px;color:${col};font-weight:600;">${botLabel(p.strategy)}</div>
       <div style="font-size:10px;color:var(--muted);">${p.asset}</div>
       <div style="width:80px;height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">
         <div style="height:100%;width:${Math.min(posRiskPct*10,100).toFixed(1)}%;background:${capColor};border-radius:3px;"></div>
@@ -3517,7 +3522,7 @@ function renderMarginDeployed(containerId, openPos, fundNav){
     const holdTime=p.entryTime?fmtCESTTimer(p.entryTime):'—';
     return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);">
       <div style="flex:1;min-width:0;">
-        <div style="font-size:11px;font-weight:600;color:${col};">${p.strategy}</div>
+        <div style="font-size:11px;font-weight:600;color:${col};">${botLabel(p.strategy)}</div>
         <div style="font-size:10px;color:var(--muted);">${p.asset} · <span style="color:${dir}">${p.direction}</span> · ${holdTime}</div>
       </div>
       <div style="text-align:right;">
@@ -3564,7 +3569,7 @@ function renderRecentClosed(trades){
     return `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);">
       <div style="font-size:14px;">${exitIcon}</div>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:11px;font-weight:600;color:${col};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.strategy}</div>
+        <div style="font-size:11px;font-weight:600;color:${col};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${botLabel(t.strategy)}</div>
         <div style="font-size:10px;color:var(--muted);">${t.asset||'—'} · ${dateStr}</div>
       </div>
       <div style="text-align:right;">
@@ -4268,7 +4273,7 @@ function exportPDF(){
   </div>
   <h2 style="font-size:13px;margin:20px 0 10px;">Recent Trades (last 25)</h2>
   <table><thead><tr><th>#</th><th>Date</th><th>Strategy</th><th>Asset</th><th>Dir</th><th>Entry</th><th>Exit</th><th>P&L</th><th>Exit Type</th></tr></thead>
-  <tbody>${(d.trades||[]).slice(-25).reverse().map(t=>`<tr><td>${t.num}</td><td>${String(t.timestamp||'').slice(0,10)}</td><td>${t.strategy}</td><td>${t.asset}</td><td>${t.direction}</td><td>${fmtP(t.entry)}</td><td>${fmtP(t.exit)}</td><td style="color:${t.pnl>=0?'#16a34a':'#dc2626'}">${sgn(t.pnl)}CHF ${fmt(Math.abs(t.pnl))}</td><td>${t.exitType}</td></tr>`).join('')||'<tr><td colspan=9>No trades yet</td></tr>'}</tbody>
+  <tbody>${(d.trades||[]).slice(-25).reverse().map(t=>`<tr><td>${t.num}</td><td>${String(t.timestamp||'').slice(0,10)}</td><td>${botLabel(t.strategy)}</td><td>${t.asset}</td><td>${t.direction}</td><td>${fmtP(t.entry)}</td><td>${fmtP(t.exit)}</td><td style="color:${t.pnl>=0?'#16a34a':'#dc2626'}">${sgn(t.pnl)}CHF ${fmt(Math.abs(t.pnl))}</td><td>${t.exitType}</td></tr>`).join('')||'<tr><td colspan=9>No trades yet</td></tr>'}</tbody>
   </table>
   <div style="margin-top:32px;font-size:10px;color:#aaa;border-top:1px solid #eee;padding-top:12px;display:flex;justify-content:space-between;">
     <span>© ${new Date().getFullYear()} North Star Capital · Authorised users only</span><span>UnifiedTrader_${BOT_FILE_TAG}</span>
