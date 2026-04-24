@@ -1213,7 +1213,7 @@ body.privacy-on .inv-name-blur:hover{filter:blur(0);}
       <select class="modal-input" id="wc-investor" onchange="calcWithdrawal()" style="cursor:pointer;padding:11px 14px;"></select>
     </div>
 
-    <label style="font-size:10px;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Withdrawal Amount ($)</label>
+    <label style="font-size:10px;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px;">Withdrawal Amount (CHF)</label>
     <input class="modal-input" id="payout-input" type="number" placeholder="e.g. 5000" oninput="calcWithdrawal()" min="0" style="margin-bottom:10px;">
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;">
       <button class="modal-btn" style="margin-bottom:0;font-size:10px;padding:7px 12px;" onclick="setWcPreset('full')">Full Withdrawal</button>
@@ -2731,7 +2731,7 @@ function renderOverview(trades, openPos, fundNav){
         border-radius:10px;padding:10px 16px;display:inline-flex;align-items:center;gap:20px;flex-wrap:wrap;">
         <div>
           <div class="unit-nav-lbl">Unit NAV Price</div>
-          <div class="unit-nav-val" id="unit-nav-price" style="color:${unitGainColor};">$${cup.toFixed(4)}</div>
+          <div class="unit-nav-val" id="unit-nav-price" style="color:${unitGainColor};">CHF ${cup.toFixed(4)}</div>
         </div>
         <div style="width:1px;height:28px;background:var(--border);"></div>
         <div>
@@ -2806,7 +2806,7 @@ function renderOverview(trades, openPos, fundNav){
     rowL('Sharpe Ratio', st.sharpe.toFixed(2), st.sharpe>=1?'color:var(--green)':st.sharpe>=0?'color:var(--silver2)':'color:var(--red)')+
     rowL('Sortino Ratio', st.sortino.toFixed(2), st.sortino>=1?'color:var(--green)':st.sortino>=0?'color:var(--silver2)':'color:var(--red)')+
     rowL('Max Drawdown', `${(st.maxDrawdownPct*100).toFixed(2)}%`, 'color:var(--red)')+
-    rowL('Max DD ($)', `-CHF ${fmt(st.maxDrawdownAbs)}`, 'color:var(--red)')+
+    rowL('Max DD (CHF)', `-CHF ${fmt(st.maxDrawdownAbs)}`, 'color:var(--red)')+
     rowL('Annualised Return', `${sgn(st.annualisedReturn)}${(Math.abs(st.annualisedReturn)*100).toFixed(1)}%`, st.annualisedReturn>=0?'color:var(--green)':'color:var(--red)')+
     rowL('Best Trade', `+CHF ${fmt(st.bestTrade)}`, 'color:var(--green)')+
     rowL('Worst Trade', `-CHF ${fmt(Math.abs(st.worstTrade))}`, 'color:var(--red)')+
@@ -2875,29 +2875,48 @@ function renderUnitNav(fundNav, trades){
   // renderUnitNav still owns the unit NAV chart below.
 
   // ── Unit NAV chart (overview page) ──────────────────────────────
-  const history = ua.history || [];
-  // Replace the sentinel 'Inception' label with the actual inception date so
-  // the x-axis shows a real date rather than the plain word "Inception".
-  if (history.length > 0 && history[0].date === 'Inception' && inceptionDate) {
-    history[0] = { ...history[0], date: inceptionDate };
-  }
-  if(history.length >= 2){
-    const up = price >= 1.0;
+  // Build a sorted pts array that mirrors the analytics chart approach:
+  // inception anchor → history points on/after inception date → 'Now' pinned last.
+  // This prevents the x-axis disorder that occurs when deposit dates pre-date the
+  // inception date setting (e.g. deposits Apr 9/11 but inception set to Apr 21).
+  const rawHistory = ua.history || [];
+  const histPts = rawHistory
+    .filter(h => {
+      if (!h.date || h.date === 'Inception' || h.date === 'Now') return false;
+      if (inceptionDate && String(h.date).slice(0,10) < inceptionDate) return false;
+      return true;
+    })
+    .map(h => ({ date: String(h.date).slice(0,10), price: +(h.price||1).toFixed(4) }));
+
+  let ovPts = [
+    { date: inceptionDate || 'Inception', price: +inceptionPrice.toFixed(4) },
+    ...histPts
+  ];
+  // Remove exact consecutive duplicates
+  ovPts = ovPts.filter((p,i,a) => i===0 || !(p.date===a[i-1].date && p.price===a[i-1].price));
+  // Sort chronologically (non-Now points only)
+  ovPts = ovPts.sort((a,b) => String(a.date).localeCompare(String(b.date)));
+  // Always append live 'Now' point at end
+  const livePriceOv = price > 0 ? +price.toFixed(4) : +inceptionPrice.toFixed(4);
+  ovPts.push({ date: 'Now', price: livePriceOv });
+
+  if(ovPts.length >= 2){
+    const up = livePriceOv >= inceptionPrice;
     makeChart('unitNavChart','line',
-      {labels: history.map(h => h.date==='Now' ? 'Current' : h.date),
-       datasets:[{data: history.map(h => +(h.price||1).toFixed(4)),
+      {labels: ovPts.map(p => p.date === 'Now' ? 'Current' : p.date),
+       datasets:[{data: ovPts.map(p => p.price),
          borderColor: up ? '#2dd4a0' : '#f05c6a',
          backgroundColor: up ? 'rgba(45,212,160,0.06)' : 'rgba(240,92,106,0.06)',
          fill:true, tension:.4, pointRadius:2, pointHoverRadius:4, borderWidth:2}]},
       {plugins:{legend:{display:false},tooltip:{callbacks:{
-          title: ctx => ctx[0].label === 'Now' ? 'Live (mark-to-market)' : ctx[0].label,
+          title: ctx => ctx[0].label === 'Current' ? 'Live (mark-to-market)' : ctx[0].label,
           label: c => {
             const chg = inceptionPrice > 0 ? ((c.raw - inceptionPrice) / inceptionPrice * 100) : 0;
-            return ` $${c.raw.toFixed(4)}/unit  (${chg>=0?'+':''}${chg.toFixed(2)}% vs inception)`;
+            return ` CHF ${c.raw.toFixed(4)}/unit  (${chg>=0?'+':''}${chg.toFixed(2)}% vs inception)`;
           }
         }}},
        scales:{
-         x:{ticks:{color:'#5a6472',maxTicksLimit:8,font:{size:9}},grid:{display:false}},
+         x:{ticks:{color:'#5a6472',maxTicksLimit:8,font:{size:9},autoSkip:true,maxRotation:45,minRotation:0},grid:{display:false}},
          y:{ticks:{color:'#5a6472',callback:v=>'CHF '+v.toFixed(3)},grid:{color:'rgba(255,255,255,0.04)'}}}});
   } else {
     const canvas = $('unitNavChart');
@@ -3804,11 +3823,11 @@ function renderInvestors(investors, transactions, fundNav, trades){
   const aum = ua.liveNAV || 0;   // correct total AUM = investor capital + bot P&L
 
   $('investor-metrics').innerHTML=`
-    <div class="metric-card"><div class="metric-label">Fund NAV (AUM)</div><div class="metric-value" style="color:var(--silver2)">$${fmt(aum)}</div></div>
-    <div class="metric-card"><div class="metric-label">Total Invested</div><div class="metric-value">$${fmt(totalDeposited)}</div></div>
-    <div class="metric-card"><div class="metric-label">Unit NAV Price</div><div class="metric-value" style="color:var(--silver2)">$${cup.toFixed(4)}</div></div>
-    <div class="metric-card"><div class="metric-label">Mgmt Fee Accrued</div><div class="metric-value red">−$${fmt(mgmtFeeAccrued)}</div><div class="metric-sub">${mgmtPct}% p.a. · ${feeAgeDays}d accrued</div></div>
-    <div class="metric-card"><div class="metric-label">Perf Fee Est.</div><div class="metric-value" style="color:var(--orange)">−$${fmt(perfFeeEst)}</div><div class="metric-sub">${perfPct}% on gains above cost basis</div></div>
+    <div class="metric-card"><div class="metric-label">Fund NAV (AUM)</div><div class="metric-value" style="color:var(--silver2)">CHF ${fmt(aum)}</div></div>
+    <div class="metric-card"><div class="metric-label">Total Invested</div><div class="metric-value">CHF ${fmt(totalDeposited)}</div></div>
+    <div class="metric-card"><div class="metric-label">Unit NAV Price</div><div class="metric-value" style="color:var(--silver2)">CHF ${cup.toFixed(4)}</div></div>
+    <div class="metric-card"><div class="metric-label">Mgmt Fee Accrued</div><div class="metric-value red">−CHF ${fmt(mgmtFeeAccrued)}</div><div class="metric-sub">${mgmtPct}% p.a. · ${feeAgeDays}d accrued</div></div>
+    <div class="metric-card"><div class="metric-label">Perf Fee Est.</div><div class="metric-value" style="color:var(--orange)">−CHF ${fmt(perfFeeEst)}</div><div class="metric-sub">${perfPct}% on gains above cost basis</div></div>
     <div class="metric-card"><div class="metric-label">Investors</div><div class="metric-value" style="color:var(--blue)">${investors.length}</div></div>`;
 
   // ── Build per-investor transaction map ──
@@ -4106,13 +4125,13 @@ function renderWithdrawalTracker(investors, ua, fundNav){
     const feeExemptBadge = isGP ? ' <span style="font-size:9px;background:rgba(200,169,110,0.15);color:var(--gold);border:1px solid rgba(200,169,110,0.3);border-radius:4px;padding:1px 5px;vertical-align:middle;">GP · Fee Exempt</span>' : '';
     return `<tr>
       <td style="font-weight:500">${getDisplayName(inv.name)}${feeExemptBadge}</td>
-      <td style="color:var(--green);font-family:var(--mono)">$${fmt(inv.deposited||0)}</td>
-      <td style="color:${(inv.withdrawn||0)>0?'var(--red)':'var(--muted)'};font-family:var(--mono)">$${fmt(inv.withdrawn||0)}</td>
+      <td style="color:var(--green);font-family:var(--mono)">CHF ${fmt(inv.deposited||0)}</td>
+      <td style="color:${(inv.withdrawn||0)>0?'var(--red)':'var(--muted)'};font-family:var(--mono)">CHF ${fmt(inv.withdrawn||0)}</td>
       <td style="color:var(--blue);font-family:var(--mono)">${units.toFixed(4)}</td>
-      <td style="color:var(--silver2);font-family:var(--mono)">$${fmt(currentVal)}</td>
+      <td style="color:var(--silver2);font-family:var(--mono)">CHF ${fmt(currentVal)}</td>
       <td style="color:${gross>=0?'var(--green)':'var(--red)'};font-family:var(--mono)">${sgn(gross)}CHF ${fmt(Math.abs(gross))}</td>
-      <td style="color:${isGP?'var(--muted)':'var(--red)'};font-family:var(--mono)">${isGP?'—':'−$'+fmt(invMgmtFee)}</td>
-      <td style="color:${isGP?'var(--muted)':'var(--orange)'};font-family:var(--mono)">${isGP?'—':'−$'+fmt(invPerfFee)}</td>
+      <td style="color:${isGP?'var(--muted)':'var(--red)'};font-family:var(--mono)">${isGP?'—':'−CHF '+fmt(invMgmtFee)}</td>
+      <td style="color:${isGP?'var(--muted)':'var(--orange)'};font-family:var(--mono)">${isGP?'—':'−CHF '+fmt(invPerfFee)}</td>
       <td style="color:${netPnl>=0?'var(--green)':'var(--red)'};font-weight:600;font-family:var(--mono)">${sgn(netPnl)}CHF ${fmt(Math.abs(netPnl))}</td>
     </tr>`;
   }).join('') || '<tr><td colspan="9" style="color:var(--muted);padding:12px 0;">No investors</td></tr>';
@@ -5106,7 +5125,17 @@ function renderUnitNavChart(ua) {
       { date: 'Now', price: livePriceNow }
     ];
   } else {
-    // No data at all — need at least inception + one other point
+    // No data — show a message instead of silently rendering nothing
+    const _canvas = $('unitNavChart');
+    if (_canvas) {
+      const _wrap = _canvas.parentElement;
+      if (!_wrap.querySelector('.chart-empty')) {
+        const _d = document.createElement('div'); _d.className = 'chart-empty';
+        _d.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:11px;';
+        _d.textContent = 'Unit price chart builds from investor ledger transactions';
+        _wrap.appendChild(_d);
+      }
+    }
     return;
   }
 
@@ -5144,7 +5173,7 @@ function renderUnitNavChart(ua) {
           }
         }}},
       scales: {
-        x: { ticks: { color: '#5a6472', font: { size: 9 }, maxTicksLimit: 10 }, grid: { display: false } },
+        x: { ticks: { color: '#5a6472', font: { size: 9 }, maxTicksLimit: 10, autoSkip: true, maxRotation: 45, minRotation: 0 }, grid: { display: false } },
         y: { ticks: { color: '#5a6472', callback: v => 'CHF ' + v.toFixed(4) }, grid: { color: 'rgba(255,255,255,.04)' } }
       }
     });
@@ -5578,15 +5607,15 @@ td{padding:8px 8px 8px 0;border-bottom:1px solid #f3f4f6;font-family:monospace;f
 <button class="no-print" onclick="window.print()" style="margin-bottom:18px;padding:8px 16px;background:#0070b8;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;">🖨 Print / Save PDF</button>
 ${masterSection}
 <div class="grid">
-<div class="card"><div class="card-label">Fund NAV</div><div class="card-val gold">$${fmt(nav)}</div></div>
+<div class="card"><div class="card-label">Fund NAV</div><div class="card-val gold">CHF ${fmt(nav)}</div></div>
 <div class="card"><div class="card-label">Total P&L</div><div class="card-val ${st.totalPnl >= 0 ? 'green' : 'red'}">${st.totalPnl >= 0 ? '+' : ''}CHF ${fmt(Math.abs(st.totalPnl))}</div></div>
 <div class="card"><div class="card-label">Win Rate</div><div class="card-val">${(st.winRate * 100).toFixed(1)}%</div></div>
 <div class="card"><div class="card-label">Profit Factor</div><div class="card-val">${st.profitFactor.toFixed(2)}×</div></div>
 <div class="card"><div class="card-label">Total Trades</div><div class="card-val">${st.total}</div></div>
 <div class="card"><div class="card-label">Open Positions</div><div class="card-val">${openPos.length}</div></div>
-<div class="card"><div class="card-label">Unit NAV Price</div><div class="card-val gold">$${(fn.currentUnitPrice || 1).toFixed(4)}</div></div>
+<div class="card"><div class="card-label">Unit NAV Price</div><div class="card-val gold">CHF ${(fn.currentUnitPrice || 1).toFixed(4)}</div></div>
 <div class="card"><div class="card-label">Unit Return</div><div class="card-val ${fn.currentUnitPrice >= (fn.startingUnitPrice || 1) ? 'green' : 'red'}">${fn.currentUnitPrice >= (fn.startingUnitPrice || 1) ? '+' : ''}${(((fn.currentUnitPrice || 1) - (fn.startingUnitPrice || 1)) / (fn.startingUnitPrice || 1) * 100).toFixed(2)}%</div></div>
-<div class="card"><div class="card-label">Mgmt Fee Accrued</div><div class="card-val red">−$${fmt(computeMgmtFee(fn))}</div></div>
+<div class="card"><div class="card-label">Mgmt Fee Accrued</div><div class="card-val red">−CHF ${fmt(computeMgmtFee(fn))}</div></div>
 <div class="card"><div class="card-label">Fee Rate</div><div class="card-val">2.5% p.a.</div></div>
 </div>
 <h2>Open Positions</h2>
