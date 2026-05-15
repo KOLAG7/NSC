@@ -1562,20 +1562,23 @@ let PERF_FEE_RATE   = getPerfFeeRate();
 
 // ── Bot strategy colours ──────────────────────────────────────────
 const BOT_COLORS = {
-  'Gold Day-Trade':    '#e8c47a',
-  'BTC Day-Trade':     '#f7931a',   // archived V3.5.0
-  'BTC Hunter':        '#f7931a',   // new V3.5.0
-  'Oil Day-Trade':     '#c8a96e',
-  'Gold Scalper':      '#f0d060',
-  'BTC Scalper':       '#f7931a',
-  'Oil Scalper':       '#a8c48a',   // V3.6 Precision (rebranded; Python key unchanged)
-  'NAS100 Scalper':    '#6d7bff',
-  'Silver Swing Hunter':'#c0c0c0',
-  'US500 Swing Hunter':'#9fa8b0',
-  'EURUSD Breakout':   '#5b9cf6',
-  'USDJPY Breakout':   '#f05c6a',
-  'GBPUSD Breakout':   '#2dd4a0',
-  'Gold Swing Hunter': '#d4af37',
+  'Gold Day-Trade':      '#e8c47a',
+  'BTC Day-Trade':       '#f7931a',   // archived V3.5.0
+  'BTC Hunter':          '#f7931a',   // new V3.5.0
+  'Oil Day-Trade':       '#c8a96e',
+  'Gold Scalper':        '#f0d060',   // archived V4.0 — replaced by Gold 1H Breakout
+  'BTC Scalper':         '#f7931a',
+  'Oil Scalper':         '#a8c48a',   // V3.6 Precision (rebranded; Python key unchanged)
+  'NAS100 Scalper':      '#6d7bff',
+  'Silver Swing Hunter': '#c0c0c0',
+  'US500 Swing Hunter':  '#9fa8b0',
+  'EURUSD Breakout':     '#5b9cf6',
+  'USDJPY Breakout':     '#f05c6a',   // archived V4.2.1
+  'GBPUSD Breakout':     '#2dd4a0',
+  'AUDUSD Breakout':     '#60c8e8',   // new V4.0
+  'USDCAD Breakout':     '#e88c40',   // new V4.0
+  'Gold Swing Hunter':   '#d4af37',
+  'Gold 1H Breakout':    '#ffd700',   // new V4.0 — replaces Gold Scalper
 };
 // botLabel(key) — single source of truth for how a strategy name is rendered
 // across the dashboard. The `key` is the Python-canonical strategy string
@@ -1599,7 +1602,8 @@ const BOT_ICONS = {
   'Gold Scalper':'⚡','BTC Scalper':'⚡','Oil Scalper':'🎯',
   'NAS100 Scalper':'📊','Silver Swing Hunter':'🥈','US500 Swing Hunter':'📈',
   'EURUSD Breakout':'💶','USDJPY Breakout':'💴','GBPUSD Breakout':'💷',
-  'Gold Swing Hunter':'🏹',
+  'AUDUSD Breakout':'🦘','USDCAD Breakout':'🍁',
+  'Gold Swing Hunter':'🏹','Gold 1H Breakout':'⚡',
 };
 
 // ╔══════════════════════════════════════════════════════════════════╗
@@ -1612,7 +1616,7 @@ const BOT_ICONS = {
 //   Bump this one constant whenever you bump BOT_VERSION in the .py.
 //   BOT_FILE_TAG tracks the full version so it matches the Python
 //   filename convention (UnifiedTrader_V3.6.2.py etc.).
-const BOT_VERSION  = '3.6.2';
+const BOT_VERSION  = '4.2.5';
 const BOT_FILE_TAG = 'V' + BOT_VERSION;
 
 // ── System-level info (top banner on Bots tab — MASTER VIEW ONLY) ─
@@ -1620,7 +1624,7 @@ const BOT_FILE_TAG = 'V' + BOT_VERSION;
 const BOT_META = {
   version:        BOT_VERSION,        // BOT_VERSION in Python (single-sourced above)
   platform:       'Capital.com (Demo)', // BASE_URL in Python
-  account:        '$1,000 demo',          // your account size — update if needed
+  account:        '250 CHF demo',       // ACCOUNT_BALANCE_REF = 250.0
   riskCap:        '10% total open',     // MAX_TOTAL_RISK_PCT = 0.10
   circuitBreaker: '−2% daily / −3% 5-day', // DAILY_LOSS_LIMIT_PCT / CIRCUIT_BREAKER_THRESHOLD
   beBuffer:       '25% ATR beyond entry',   // BE_PROFIT_BUFFER_PCT = 0.25
@@ -1656,11 +1660,11 @@ const BOT_INFO = {
     asset:    'GOLD',                   // epic
     tf:       '30min',                  // DAY_RESOLUTION["GOLD"]
     enabled:  true,                     // STRATEGY_GOLD_DAY
-    backtest: '56.5%',                  // V3.6 backtest: +$1,458.42 / 23 trades / +$5.84 EV
-    btNetPnl: '+$1,458.42',
-    btTrades: 23,
-    btEvPerTrade: '+$5.84',
-    btVerdict: '🎯 excellent',
+    backtest: '40.0%',                  // V4.2.5 backtest: +$2,433.51 / 15 trades / +$162.23 EV
+    btNetPnl: '+$2,433.51',
+    btTrades: 15,
+    btEvPerTrade: '+$162.23',
+    btVerdict: '📈 EV positive — low sample (15T)',
     size:     'ATR vol-adjusted',       // dynamic: base 1, scales with ATR + drawdown
     maxPos:   2,                        // DAY_MAX_POSITIONS["GOLD"]
     minScore: 5,                        // DAY_MIN_SCORE["GOLD"]
@@ -1690,21 +1694,22 @@ const BOT_INFO = {
   // ── Scalper strategies ────────────────────────────────────────────
   'Gold Scalper': {
     asset:    'GOLD',
-    tf:       '15min',                  // SCALPER_RESOLUTION
-    enabled:  true,                     // STRATEGY_GOLD_SCALP
-    backtest: '47.2%',                  // V3.6 backtest: +$1,301.78 / 178 trades / +$7.34 EV
+    tf:       '15min',
+    enabled:  false,                    // V4.0: decommissioned — replaced by Gold 1H Breakout
+    archived: true,                     // master view: shows as archived card
+    backtest: '47.2%',                  // V3.6 final backtest: +$1,301.78 / 178 trades / +$7.34 EV
     btNetPnl: '+$1,301.78',
     btTrades: 178,
     btEvPerTrade: '+$7.34',
     btVerdict: '📈 EV positive',
-    size:     'Balance-scaled',         // dynamic: base 1, scales with balance + drawdown
-    maxPos:   2,                        // SCALPER_MAX_POSITIONS["GOLD_SCALP"]
-    minScore: 4,                        // SCALPER_MIN_SCORE["GOLD_SCALP"]
-    stop:     '1.0×ATR',               // SCALPER_ATR_STOP["GOLD_SCALP"]
-    target:   '2.0×ATR',               // SCALPER_ATR_TARGET["GOLD_SCALP"]
-    hours:    '08:00–16:00 UTC',        // SCALPER_HOURS["GOLD_SCALP"]
+    size:     'Balance-scaled',
+    maxPos:   2,
+    minScore: 4,
+    stop:     '1.0×ATR',
+    target:   '2.0×ATR',
+    hours:    '08:00–16:00 UTC',
     signal:   'BB position zone (45%) + Stochastic %K/%D + RSI50 gate',
-    extras:   'Cooldown: 2 candles · Limit entry (0.15×ATR) · Regime scoring',
+    extras:   'Archived V4.0 — superseded by Gold 1H Breakout (higher EV, better OOS results)',
   },
 
   'BTC Scalper': {
@@ -1752,11 +1757,11 @@ const BOT_INFO = {
     asset:    'BTCUSD',
     tf:       'Daily',                  // BTCH Donchian daily breakout
     enabled:  true,                     // STRATEGY_BTC_HUNTER
-    backtest: '66.7%',                  // V3.6 backtest: +$325.35 / 3 trades / +$108.74 EV
-    btNetPnl: '+$325.35',
-    btTrades: 3,
-    btEvPerTrade: '+$108.74',
-    btVerdict: '🎯 excellent',
+    backtest: '52.9%',                  // V4.2.5 backtest: +$471.64 / 17 trades / +$27.74 EV
+    btNetPnl: '+$471.64',
+    btTrades: 17,
+    btEvPerTrade: '+$27.74',
+    btVerdict: '🎯 excellent — rare trades',
     size:     'ATR-based (4% risk)',    // BTCH_RISK_PER_TRADE_PCT
     maxPos:   1,
     minScore: null,
@@ -1764,7 +1769,7 @@ const BOT_INFO = {
     target:   '4.0×ATR',               // BTCH_ATR_TARGET_MULT
     hours:    '24/7',
     signal:   '20-day Donchian breakout + range expansion + volume confirmation + MA50 slope alignment',
-    extras:   'Partial close 50% at 2×ATR · Chandelier trail (2.5×ATR) · BE lock with 10% buffer · EV-accounting fix (V3.5.0)',
+    extras:   'Partial close 50% at 2×ATR · Chandelier trail (2.5×ATR) · BE lock with 10% buffer · exit_type logging fix (V4.2.5)',
   },
 
   // ── NEW V3.3: NAS100 Scalper (sw framework) ─────────────────────
@@ -1772,19 +1777,19 @@ const BOT_INFO = {
     asset:    'NAS100',
     tf:       '15min',
     enabled:  true,                     // STRATEGY_NAS100_SCALP
-    backtest: '61.4%',                  // V3.6 backtest: +$2,220.66 / 44 trades / +$14.57 EV
-    btNetPnl: '+$2,220.66',
-    btTrades: 44,
-    btEvPerTrade: '+$14.57',
-    btVerdict: '🎯 excellent',
-    size:     'Volatility-scaled (1% risk)',
+    backtest: '69.4%',                  // V4.2.5 backtest: +$222.44 / 36 trades / +$6.18 EV (ATR 2.2, TIME 10)
+    btNetPnl: '+$222.44',
+    btTrades: 36,
+    btEvPerTrade: '+$6.18',
+    btVerdict: '✅ solid',
+    size:     'Volatility-scaled (3% risk)',  // RISK_PER_TRADE_PCT["NAS100_SCALP"]
     maxPos:   2,
     minScore: 4,
     stop:     '0.8×ATR',
-    target:   '2.0×ATR',
+    target:   '2.2×ATR',               // V4.2.3: raised from 2.0 → 2.2 (sweep opt)
     hours:    '13:30–20:00 UTC',        // US session
     signal:   'Pullback-in-trend: 100×15min EMA trend + BB + RSI + Stochastic confluence scoring',
-    extras:   'Partial close 50% at 1×ATR · Chandelier trail · 2 candle (30min) cooldown',
+    extras:   'Partial close 50% at 1×ATR · Chandelier trail · 2 candle (30min) cooldown · Time exit: 10 candles (V4.2.3)',
   },
 
   // ── NEW V3.3: Silver Swing Hunter (sw framework port of GoldSwing) ─
@@ -1792,19 +1797,19 @@ const BOT_INFO = {
     asset:    'SILVER',
     tf:       '4H signal · 1H exec',
     enabled:  true,                     // STRATEGY_SILVER_SWING
-    backtest: '48.1%',                  // V3.6 backtest: +$33.77 / 131 trades / +$0.26 EV
-    btNetPnl: '+$33.77',
-    btTrades: 131,
-    btEvPerTrade: '+$0.26',
-    btVerdict: '✅ solid',
-    size:     'ATR-based (1% risk)',
+    backtest: '50.0%',                  // V4.2.5 backtest: +$2,535.33 / 170 trades / +$14.91 EV · OOS 51.4%
+    btNetPnl: '+$2,535.33',
+    btTrades: 170,
+    btEvPerTrade: '+$14.91',
+    btVerdict: '🎯 excellent',
+    size:     'ATR-based (2.5% risk)',   // SWING_CONFIGS["SILVER_SWING"]["risk_pct"]
     maxPos:   2,
     minScore: 6,
     stop:     '1.5×ATR',
     target:   '2.5×ATR',
     hours:    '06:00–20:00 UTC',
     signal:   '4H+1H multi-timeframe scoring (BB, RSI, Stochastic, volume, MA alignment) · prime window bonus',
-    extras:   'Partial close 50% at 1.5×ATR · Trail to BE at 1.8×ATR · Broker min 0.5 (V3.6 fix)',
+    extras:   'Partial close 50% at 1.5×ATR · Trail to BE at 1.8×ATR · OOS 51.4%',
   },
 
   // ── NEW V3.3: US500 Swing Hunter (sw framework) ─────────────────
@@ -1812,19 +1817,19 @@ const BOT_INFO = {
     asset:    'US500',
     tf:       '4H signal · 1H exec',
     enabled:  true,                     // STRATEGY_US500_SWING
-    backtest: '44.0%',                  // V3.6 backtest: +$70.62 / 100 trades / +$0.71 EV
-    btNetPnl: '+$70.62',
-    btTrades: 100,
-    btEvPerTrade: '+$0.71',
-    btVerdict: '📈 EV positive',
-    size:     'ATR-based (1% risk)',
+    backtest: '50.3%',                  // V4.2.5 backtest: +$3,729.89 / 187 trades / +$19.95 EV · OOS 58.8%
+    btNetPnl: '+$3,729.89',
+    btTrades: 187,
+    btEvPerTrade: '+$19.95',
+    btVerdict: '🎯 excellent',
+    size:     'ATR-based (2% risk)',     // SWING_CONFIGS["US500_SWING"]["risk_pct"]
     maxPos:   2,
     minScore: 6,
     stop:     '1.5×ATR',
     target:   '2.5×ATR',
     hours:    '13:30–21:00 UTC',        // US cash session
     signal:   '4H+1H multi-timeframe scoring (BB, RSI, Stochastic, volume, MA alignment) · US RTH only',
-    extras:   'Partial close 50% at 1.5×ATR · Trail to BE at 1.8×ATR · Weekend RTH gate',
+    extras:   'Partial close 50% at 1.5×ATR · Trail to BE at 1.8×ATR · Weekend RTH gate · OOS 58.8%',
   },
 
   // ── Forex daily breakout strategies ──────────────────────────────
@@ -1832,10 +1837,10 @@ const BOT_INFO = {
     asset:    'EURUSD',
     tf:       '1H',
     enabled:  true,                     // STRATEGY_EURUSD
-    backtest: '48.8%',                  // V3.6 backtest: +$242.34 / 41 trades / +$1.60 EV
-    btNetPnl: '+$242.34',
-    btTrades: 41,
-    btEvPerTrade: '+$1.60',
+    backtest: '42.9%',                  // V4.2.5 backtest: +$317.93 / 28 trades / +$11.35 EV
+    btNetPnl: '+$317.93',
+    btTrades: 28,
+    btEvPerTrade: '+$11.35',
     btVerdict: '✅ solid',
     size:     'Balance-scaled',         // dynamic: base 10,000 units, scales with balance
     maxPos:   1,
@@ -1850,30 +1855,31 @@ const BOT_INFO = {
   'USDJPY Breakout': {
     asset:    'USDJPY',
     tf:       '1H',
-    enabled:  true,                     // STRATEGY_USDJPY
-    backtest: '45.7%',                  // V3.6 backtest: +$5,467.79 / 94 trades / +$40.37 EV
+    enabled:  false,                    // V4.2.1: disabled — no statistical edge found
+    archived: true,                     // master view: shows as archived card
+    backtest: '45.7%',                  // V3.6 final backtest: +$5,467.79 / 94 trades / +$40.37 EV
     btNetPnl: '+$5,467.79',
     btTrades: 94,
     btEvPerTrade: '+$40.37',
     btVerdict: '📈 EV positive',
-    size:     'Balance-scaled',         // dynamic: base 1,000 units, scales with balance
+    size:     'Balance-scaled',
     maxPos:   1,
     minScore: null,
-    stop:     '5 JPY buffer',           // FOREX_CONFIG["USDJPY"]["stop_buf"]
-    target:   '1.8× risk',              // FOREX_CONFIG["USDJPY"]["target_mult"]
-    hours:    '08:00–16:00 UTC',        // FOREX_ENTRY_HOURS["USDJPY"]
+    stop:     '5 JPY buffer',
+    target:   '1.8× risk',
+    hours:    '08:00–16:00 UTC',
     signal:   "Yesterday's H/L breakout + ATR filter + Weekly trend",
-    extras:   'Max stop 50 pips · EOD force close 21:00 UTC · Min range 50 pips',
+    extras:   'Archived V4.2.1 — no statistical edge confirmed; JPY P&L formula imprecision without currency conversion',
   },
 
   'GBPUSD Breakout': {
     asset:    'GBPUSD',
     tf:       '1H',
     enabled:  true,                     // STRATEGY_GBPUSD
-    backtest: '50.9%',                  // V3.6 backtest: +$412.00 / 55 trades / +$3.68 EV
-    btNetPnl: '+$412.00',
-    btTrades: 55,
-    btEvPerTrade: '+$3.68',
+    backtest: '43.1%',                  // V4.2.5 backtest: +$484.39 / 51 trades / +$9.50 EV (min_range 0.0035)
+    btNetPnl: '+$484.39',
+    btTrades: 51,
+    btEvPerTrade: '+$9.50',
     btVerdict: '✅ solid',
     size:     'Balance-scaled',         // dynamic: base 10,000 units, scales with balance
     maxPos:   1,
@@ -1882,7 +1888,7 @@ const BOT_INFO = {
     target:   '1.8× risk',              // FOREX_CONFIG["GBPUSD"]["target_mult"]
     hours:    '08:00–14:00 UTC',        // FOREX_ENTRY_HOURS["GBPUSD"]
     signal:   "Yesterday's H/L breakout + ATR filter + Weekly trend",
-    extras:   'EOD force close 21:00 UTC · Min range 35 pips · Min risk 15 pips',
+    extras:   'EOD force close 21:00 UTC · Min range 35 pips (0.0035) · Min risk 15 pips',
   },
 
   // ── Swing strategies ─────────────────────────────────────────────
@@ -1890,19 +1896,79 @@ const BOT_INFO = {
     asset:    'GOLD',
     tf:       '1H signal · 4H trend',   // GS_RESOLUTION (HOUR) + GS_TREND_RESOLUTION (HOUR_4)
     enabled:  true,                     // STRATEGY_GOLD_SWING
-    backtest: '49.2%',                  // V3.6 backtest: +$1,166.56 / 128 trades / +$9.11 EV
-    btNetPnl: '+$1,166.56',
-    btTrades: 128,
-    btEvPerTrade: '+$9.11',
-    btVerdict: '✅ solid',
-    size:     'ATR-based (1% risk)',    // GS_RISK_PCT = 0.01
+    backtest: '50.5%',                  // V4.2.5 backtest: +$4,115.88 / 188 trades / +$21.89 EV · OOS 48.8%
+    btNetPnl: '+$4,115.88',
+    btTrades: 188,
+    btEvPerTrade: '+$21.89',
+    btVerdict: '🎯 excellent',
+    size:     'ATR-based (2% risk)',     // SWING_CONFIGS["GOLD_SWING"]["risk_pct"]
     maxPos:   2,                        // GS_MAX_POSITIONS
     minScore: '≥6 buy / ≥7 sell',      // GS_MIN_SCORE_BUY / GS_MIN_SCORE_SELL
     stop:     '1.5×ATR',               // GS_ATR_STOP_MULT
     target:   '2.5×ATR',               // GS_ATR_TARGET_MULT
     hours:    '06:00–20:00 UTC',        // GS_SESSION_START / GS_SESSION_END
     signal:   'Multi-timeframe: 4H EMA50 trend gate + 1H RSI / Bollinger Bands / Stochastic / MACD scoring',
-    extras:   'Partial close 50% at 1.8×ATR · Trailing stop · Independent positions (max 2)',
+    extras:   'Partial close 50% at 1.8×ATR · Trailing stop · Independent positions (max 2) · OOS 48.8%',
+  },
+
+  // ── NEW V4.0: Gold 1H Breakout (replaces Gold Scalper) ───────────
+  'Gold 1H Breakout': {
+    asset:    'GOLD',                   // epic
+    tf:       '1H',                     // GOLD1H_RESOLUTION
+    enabled:  true,                     // STRATEGY_GOLD_1H
+    backtest: '51.8%',                  // V4.2.5 backtest: +$9,129.33 / 83 trades / +$109.99 EV · OOS 52.9%
+    btNetPnl: '+$9,129.33',
+    btTrades: 83,
+    btEvPerTrade: '+$109.99',
+    btVerdict: '🎯 excellent',
+    size:     'ATR vol-adjusted',       // dynamic: vol-sized, scales with ATR
+    maxPos:   1,                        // GOLD1H_MAX_POSITIONS
+    minScore: null,                     // breakout — no score gate
+    stop:     '1.5×ATR',               // GOLD1H_ATR_STOP_MULT
+    target:   '2.5×ATR',               // GOLD1H_ATR_TARGET_MULT
+    hours:    '06:00–20:00 UTC',
+    signal:   '1H candle breakout above/below prior swing high/low + ATR expansion filter + Daily trend gate',
+    extras:   'Partial close 50% at 1.5×ATR · Trail to BE · Broker-close logging (V4.2.5) · OOS 52.9%',
+  },
+
+  // ── NEW V4.0: AUDUSD Breakout ────────────────────────────────────
+  'AUDUSD Breakout': {
+    asset:    'AUDUSD',
+    tf:       '1H',
+    enabled:  true,                     // STRATEGY_AUDUSD
+    backtest: '45.2%',                  // V4.2.5 backtest: +$439.57 / 31 trades / +$14.18 EV (min_range 0.0045)
+    btNetPnl: '+$439.57',
+    btTrades: 31,
+    btEvPerTrade: '+$14.18',
+    btVerdict: '✅ solid',
+    size:     'Balance-scaled',         // dynamic: base 10,000 units, scales with balance
+    maxPos:   1,
+    minScore: null,
+    stop:     '2 pips buffer',          // FOREX_CONFIG["AUDUSD"]["stop_buf"]
+    target:   '1.8× risk',              // FOREX_CONFIG["AUDUSD"]["target_mult"]
+    hours:    '00:00–08:00 UTC',        // FOREX_ENTRY_HOURS["AUDUSD"] — Asian session
+    signal:   "Yesterday's H/L breakout + ATR filter + Weekly trend",
+    extras:   'EOD force close 21:00 UTC · Min range 45 pips (0.0045, V4.2.3) · Min risk 15 pips',
+  },
+
+  // ── NEW V4.0: USDCAD Breakout ────────────────────────────────────
+  'USDCAD Breakout': {
+    asset:    'USDCAD',
+    tf:       '1H',
+    enabled:  true,                     // STRATEGY_USDCAD
+    backtest: '46.2%',                  // V4.2.5 backtest: −$31.91 / 13 trades / −$2.45 EV (low sample, min_range 0.0055)
+    btNetPnl: '−$31.91',
+    btTrades: 13,
+    btEvPerTrade: '−$2.45',
+    btVerdict: '⚠️ negative — low sample (13T)',
+    size:     'Balance-scaled',         // dynamic: base 10,000 units, scales with balance
+    maxPos:   1,
+    minScore: null,
+    stop:     '2 pips buffer',          // FOREX_CONFIG["USDCAD"]["stop_buf"]
+    target:   '1.8× risk',              // FOREX_CONFIG["USDCAD"]["target_mult"]
+    hours:    '13:30–20:00 UTC',        // FOREX_ENTRY_HOURS["USDCAD"] — NY session
+    signal:   "Yesterday's H/L breakout + ATR filter + Weekly trend",
+    extras:   'EOD force close 21:00 UTC · Min range 55 pips (0.0055) · Min risk 15 pips · Monitor for more data',
   },
 
 }; // ← end BOT_INFO — add new strategies above this line
